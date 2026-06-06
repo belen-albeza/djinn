@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap"); */
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+
+  --radius-sharp: 2px; /* buttons, inputs, tabs */
+  --radius-card: 6px; /* panels, floating cards */
+
+  --border-width-ui: 1.5px;
+
+  /* base colors */
+  --color-ink: #0A0A0A;
+  --color-paper: #FFFFFF;
+
+  /* neutral */
+  --color-sand-50: #F5F0E8;
+  --color-sand-100: #E8E3DB;
+  --color-sand-200: #C8C3BB;
+  --color-sand-400: #A09B93;
+  --color-sand-600: #6B6660;
+  --color-sand-800: #3A3632;
+
+  /* accent color */
+  --color-burst: #FF4D00;
+  --color-burst-600: #CC3D00;
+
+  /* semantic levels */
+  --color-success-100: #E8F5E9;
+  --color-success-700: #2E7D32;
+  --color-warning-100: #FFF3E0;
+  --color-warning-700: #E65100;
+  --color-error-100: #FCE4EC;
+  --color-error-700: #C2185B;
+  --color-info-100: #E3F2FD;
+  --color-info-700: #1565C0;
+
+}
+
+body {
+  @apply bg-sand-50 text-ink;
+}
