@@ -8,6 +8,7 @@ interface EditableInputProps {
   onChange: (value: string) => void;
   className?: string;
   editButtonClassName?: string;
+  editIconAriaLabel?: string;
   type?: "text" | "number" | "email" | "password" | "tel" | "url";
 }
 
@@ -16,6 +17,7 @@ export default function EditableInput({
   onChange,
   className,
   editButtonClassName,
+  editIconAriaLabel = "Edit",
   type = "text",
 }: EditableInputProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -113,6 +115,7 @@ export default function EditableInput({
       <Button
         variant="ghost"
         icon={PencilSimpleIcon}
+        aria-label={editIconAriaLabel}
         className={editButtonClassName}
         onClick={startEditing}
         disabled={isEditing}
