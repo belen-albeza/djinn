@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { LegoIcon } from "@phosphor-icons/react";
 import EditableInput from "~/ui/editable-input";
+import { randomGameTitle } from "~/utils/random";
 
-export const DEFAULT_TITLE = "Rocky Galaxy";
+interface HeaderProps {
+  defaultTitle: string;
+}
 
-export default function Header() {
-  // TODO: this should be in the global state
-  const [title, setTitle] = useState(DEFAULT_TITLE);
+export default function Header({ defaultTitle }: HeaderProps) {
+  const [title, setTitle] = useState(defaultTitle);
 
   return (
     <header className="p-4 bg-ink text-paper grid grid-cols-[auto_1fr] gap-8 items-center">

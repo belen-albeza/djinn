@@ -10,12 +10,12 @@ import Header from "./header";
 
 describe("Header", () => {
   it("Shows the project title", () => {
-    const { container } = render(<Header />);
+    const { container } = render(<Header defaultTitle="Rocky Galaxy" />);
     expect(getByAccessibleText(container, "Rocky Galaxy")).toBeVisible();
   });
 
   it("Edits the project title", () => {
-    const { container } = render(<Header />);
+    const { container } = render(<Header defaultTitle="Rocky Galaxy" />);
     const editButton = getByRole(container, "button", { name: "Edit title" });
 
     fireEvent.click(editButton);
@@ -27,7 +27,7 @@ describe("Header", () => {
   });
 
   it("Cancels editing the project title", () => {
-    const { container } = render(<Header />);
+    const { container } = render(<Header defaultTitle="Rocky Galaxy" />);
     const editButton = getByRole(container, "button", { name: "Edit title" });
 
     fireEvent.click(editButton);
