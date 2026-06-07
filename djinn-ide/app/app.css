@@ -39,6 +39,16 @@
 
 }
 
+@utility anchor-* {
+  anchor-name: --value([*]);
+}
+
+@utility anchor-below-* {
+  position-anchor: --value([*]);
+  top: anchor(bottom);
+  left: anchor(left);
+}
+
 body {
   @apply bg-sand-50 text-ink;
 }

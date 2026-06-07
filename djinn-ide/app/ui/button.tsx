@@ -24,7 +24,8 @@ export default function Button({
   return (
     <button
       className={clsx(
-        variant === "ghost" && "bg-transparent text-current",
+        variant === "ghost" &&
+          "bg-transparent text-current transition-colors duration-250",
         className,
       )}
       {...props}
