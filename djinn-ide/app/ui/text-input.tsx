@@ -1,8 +1,10 @@
 import clsx from "clsx";
 import { useId, type InputHTMLAttributes } from "react";
 
-interface TextInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
+interface TextInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "id"
+> {
   label: string;
   id?: string;
   error?: string;
@@ -25,7 +27,7 @@ export default function TextInput({
   const errorId = error ? `${id}-error` : undefined;
 
   return (
-    <div className={className}>
+    <span className={className}>
       <label
         htmlFor={id}
         className="mb-2 block text-xs font-medium tracking-wide uppercase text-sand-600"
@@ -54,6 +56,6 @@ export default function TextInput({
           {error}
         </p>
       ) : null}
-    </div>
+    </span>
   );
 }
