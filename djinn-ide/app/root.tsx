@@ -51,9 +51,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function clientLoader(): ProjectSnapshot {
-  const project = { title: randomGameTitle() };
-  useProjectStore.getState().setProject(project);
-  return project;
+  // TODO: attempt to load project from local storage
+  return useProjectStore.getState();
 }
 
 export default function App() {

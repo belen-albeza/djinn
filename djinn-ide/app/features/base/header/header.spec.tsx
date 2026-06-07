@@ -3,6 +3,7 @@ import {
   fireEvent,
   getByRole,
   getByDisplayValue,
+  queryByRole,
   render,
 } from "@testing-library/react";
 import { getByAccessibleText } from "#test/testing-library";
@@ -22,10 +23,17 @@ beforeEach(() => {
 });
 
 describe("Header", () => {
-  it("Shows the project title", () => {
+  it("Shows the project title if available", () => {
     useProjectStore.setState(anyProjectWithTitle("Rocky Galaxy"));
     const { container } = render(<Header />);
     expect(getByAccessibleText(container, "Rocky Galaxy")).toBeVisible();
+  });
+
+  it("Shows no edit button if no title is available", () => {
+    const { container } = render(<Header />);
+    expect(
+      queryByRole(container, "button", { name: "Edit title" }),
+    ).not.toBeInTheDocument();
   });
 
   it("Edits the project title", () => {
