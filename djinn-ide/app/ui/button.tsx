@@ -8,12 +8,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
   onClick?: () => void;
   icon?: IconType;
+  iconSize?: number;
   "aria-label"?: string;
 }
 
 export default function Button({
   children,
   icon,
+  iconSize = 16,
   variant = "primary",
   className,
   "aria-label": ariaLabel,
@@ -23,6 +25,7 @@ export default function Button({
 
   return (
     <button
+      title={ariaLabel}
       className={clsx(
         variant === "ghost" &&
           "bg-transparent text-current transition-colors duration-250",
@@ -38,7 +41,7 @@ export default function Button({
       {...props}
     >
       {Icon && (
-        <Icon size={24} aria-hidden={!ariaLabel} aria-label={ariaLabel} />
+        <Icon size={iconSize} aria-hidden={!ariaLabel} aria-label={ariaLabel} />
       )}
       {children}
     </button>

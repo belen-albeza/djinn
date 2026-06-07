@@ -13,8 +13,8 @@ export default function Header() {
         <EditableInput
           value={title}
           onChange={setTitle}
-          className="font-mono text-xl font-bold"
-          editButtonClassName="text-sand-600 hover:text-burst"
+          className="font-mono text-m uppercase font-semibold text-sand-400"
+          editButtonClassName="text-sand-400 hover:text-burst"
           editIconAriaLabel="Edit title"
         />
       ) : (
