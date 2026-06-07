@@ -1,14 +1,10 @@
-import { useState } from "react";
 import { LegoIcon } from "@phosphor-icons/react";
 import EditableInput from "~/ui/editable-input";
-import { randomGameTitle } from "~/utils/random";
+import { useProjectStore } from "~/features/base/project.store";
 
-interface HeaderProps {
-  defaultTitle: string;
-}
-
-export default function Header({ defaultTitle }: HeaderProps) {
-  const [title, setTitle] = useState(defaultTitle);
+export default function Header() {
+  const title = useProjectStore((state) => state.title);
+  const setTitle = useProjectStore((state) => state.setTitle);
 
   return (
     <header className="p-4 bg-ink text-paper grid grid-cols-[auto_1fr] gap-8 items-center">

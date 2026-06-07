@@ -1,14 +1,10 @@
 import type { Route } from "./+types/home";
-import { LegoIcon } from "@phosphor-icons/react";
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
+  return [{ title: "Djinn IDE" }];
 }
 
-export default function Home() {
+export function Quote() {
   return (
     <div className="flex min-h-[calc(100dvh-8rem)] items-center justify-center">
       <blockquote className="max-w-xl">
@@ -21,4 +17,8 @@ export default function Home() {
       </blockquote>
     </div>
   );
+}
+
+export default function Home() {
+  return <Quote />;
 }

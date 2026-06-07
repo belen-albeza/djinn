@@ -9,8 +9,12 @@ import {
 } from "react-router";
 import type { Route } from "./+types/root";
 
+import Ide from "~/features/base/ide";
+import {
+  useProjectStore,
+  type ProjectSnapshot,
+} from "~/features/base/project.store";
 import { randomGameTitle } from "~/utils/random";
-import Header from "~/components/header";
 
 import "./app.css";
 
@@ -46,13 +50,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function clientLoader(): ProjectSnapshot {
+  const project = { title: randomGameTitle() };
+  useProjectStore.getState().setProject(project);
+  return project;
+}
+
 export default function App() {
   return (
     <>
-      <Header defaultTitle={randomGameTitle()} />
-      <main className="p-8">
+      <Ide>
         <Outlet />
-      </main>
+      </Ide>
     </>
   );
 }
