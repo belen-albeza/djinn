@@ -115,6 +115,7 @@ export default function EditableInput({
       <Button
         variant="ghost"
         icon={PencilSimpleIcon}
+        iconSize={16}
         aria-label={editIconAriaLabel}
         className={editButtonClassName}
         onClick={startEditing}

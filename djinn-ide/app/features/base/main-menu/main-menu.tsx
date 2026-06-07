@@ -2,6 +2,7 @@ import clsx from "clsx";
 
 import { ListIcon, PlusIcon } from "@phosphor-icons/react";
 import type { Icon as IconType } from "@phosphor-icons/react";
+import { useMatch, useNavigate } from "react-router";
 
 interface MenuItemProps {
   children: React.ReactNode;
@@ -33,6 +34,8 @@ function MenuItem({
       <button
         disabled={disabled}
         onClick={onClick}
+        popoverTarget="main-menu"
+        popoverTargetAction="hide"
         className="w-full text-left text-sm font-semibold flex direction-row gap-1 items-center disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {Icon && <Icon size={12} weight="bold" />}
@@ -43,6 +46,18 @@ function MenuItem({
 }
 
 export default function MainMenu() {
+  const navigate = useNavigate();
+  const isOnNewProjectRoute = !!(useMatch({ path: "/new" }) ?? false);
+
+  function handleNewProject() {
+    // TODO: Use a custom, beautiful modal instead
+    if (!confirm("Are you sure? The current project will be lost.")) {
+      return;
+    }
+
+    navigate("/new");
+  }
+
   return (
     <>
       <button
@@ -58,7 +73,13 @@ export default function MainMenu() {
         aria-label="Main menu"
         className="anchor-below-[--main-menu-button] z-999 bg-ink text-sand-200 min-w-48 rounded-sharp"
       >
-        <MenuItem icon={PlusIcon}>New Project</MenuItem>
+        <MenuItem
+          icon={PlusIcon}
+          onClick={handleNewProject}
+          disabled={isOnNewProjectRoute}
+        >
+          New Project
+        </MenuItem>
         <MenuItem disabled>Open Project</MenuItem>
         <MenuItem disabled>Download</MenuItem>
       </menu>
