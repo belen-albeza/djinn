@@ -4,9 +4,8 @@ import {
   getByRole,
   getByDisplayValue,
   queryByRole,
-  render,
 } from "@testing-library/react";
-import { getByAccessibleText } from "#test/testing-library";
+import { getByAccessibleText, renderWithRouter } from "#test/testing-library";
 import {
   defaultProject,
   useProjectStore,
@@ -25,12 +24,12 @@ beforeEach(() => {
 describe("Header", () => {
   it("Shows the project title if available", () => {
     useProjectStore.setState(anyProjectWithTitle("Rocky Galaxy"));
-    const { container } = render(<Header />);
+    const { container } = renderWithRouter(<Header />);
     expect(getByAccessibleText(container, "Rocky Galaxy")).toBeVisible();
   });
 
   it("Shows no edit button if no title is available", () => {
-    const { container } = render(<Header />);
+    const { container } = renderWithRouter(<Header />);
     expect(
       queryByRole(container, "button", { name: "Edit title" }),
     ).not.toBeInTheDocument();
@@ -38,7 +37,7 @@ describe("Header", () => {
 
   it("Edits the project title", () => {
     useProjectStore.setState(anyProjectWithTitle("Rocky Galaxy"));
-    const { container } = render(<Header />);
+    const { container } = renderWithRouter(<Header />);
     const editButton = getByRole(container, "button", { name: "Edit title" });
 
     fireEvent.click(editButton);
@@ -51,7 +50,7 @@ describe("Header", () => {
 
   it("Cancels editing the project title", () => {
     useProjectStore.setState(anyProjectWithTitle("Rocky Galaxy"));
-    const { container } = render(<Header />);
+    const { container } = renderWithRouter(<Header />);
     const editButton = getByRole(container, "button", { name: "Edit title" });
 
     fireEvent.click(editButton);
