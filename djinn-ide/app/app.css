@@ -25,6 +25,7 @@
 
   /* accent color */
   --color-burst: #FF4D00;
+  --color-burst-400: #FF6822;
   --color-burst-600: #CC3D00;
 
   /* semantic levels */
@@ -36,6 +37,12 @@
   --color-error-700: #C2185B;
   --color-info-100: #E3F2FD;
   --color-info-700: #1565C0;
+
+  --shadow-grotesk: 4px 4px 0 var(--color-burst);
+  --shadow-grotesk-ink: 4px 4px 0 var(--color-ink);
+  --shadow-grotesk-ink-pop: 5px 5px 0 var(--color-ink);
+  --shadow-grotesk-ink-pressed: 2px 2px 0 var(--color-ink);
+  --shadow-grotesk-error: 4px 4px 0 var(--color-error-700);
 
 }
 

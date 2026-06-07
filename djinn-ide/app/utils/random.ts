@@ -13,6 +13,15 @@ const adjectives = [
   "Animal",
   "Rising",
   "Awakening",
+  "Velvet",
+  "Glowing",
+  "Arcane",
+  "Mystic",
+  "Enchanted",
+  "Cursed",
+  "Forgotten",
+  "Forsaken",
+  "Lost",
 ];
 
 const nouns = [
@@ -31,6 +40,16 @@ const nouns = [
   "Village",
   "City",
   "Kingdom",
+  "Shimmer",
+  "Sparkle",
+  "Glitter",
+  "Flame",
+  "Shadow",
+  "Whisper",
+  "Echo",
+  "Dream",
+  "Journey",
+  "Odyssey",
 ];
 
 export function randomGameTitle(): string {

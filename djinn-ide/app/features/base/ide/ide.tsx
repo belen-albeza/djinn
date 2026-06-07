@@ -6,9 +6,9 @@ interface IdeProps {
 
 export default function Ide({ children }: IdeProps) {
   return (
-    <>
+    <div className="grid min-h-dvh grid-rows-[auto_1fr]">
       <Header />
-      <main className="p-8">{children}</main>
-    </>
+      <main className="p-8 grid h-full">{children}</main>
+    </div>
   );
 }

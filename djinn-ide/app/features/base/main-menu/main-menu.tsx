@@ -23,7 +23,11 @@ function MenuItem({
 
   return (
     <li
-      className={clsx("py-2 px-4 hover:bg-burst hover:text-ink", className)}
+      className={clsx(
+        "py-2 px-4",
+        !disabled && "hover:bg-burst hover:text-ink",
+        className,
+      )}
       {...other}
     >
       <button

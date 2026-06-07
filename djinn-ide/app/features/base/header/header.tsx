@@ -9,7 +9,7 @@ export default function Header() {
   return (
     <header className="p-4 bg-ink text-paper grid grid-cols-[auto_1fr] gap-8 items-center">
       <MainMenu />
-      {title && (
+      {title ? (
         <EditableInput
           value={title}
           onChange={setTitle}
@@ -17,6 +17,10 @@ export default function Header() {
           editButtonClassName="text-sand-600 hover:text-burst"
           editIconAriaLabel="Edit title"
         />
+      ) : (
+        <p className="font-mono text-m uppercase font-semibold text-sand-400 before:content-['•'] before:text-burst flex direction-row gap-1">
+          New Project
+        </p>
       )}
     </header>
   );
