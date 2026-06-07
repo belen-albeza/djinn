@@ -1,10 +1,13 @@
 import clsx from "clsx";
+import { useState } from "react";
 import { useNavigate } from "react-router";
+import { DiceThreeIcon } from "@phosphor-icons/react";
 
-import type { Route } from "./+types/home";
+import type { Route } from "./+types/new";
 import TextInput from "~/ui/text-input";
 import Button from "~/ui/button";
 import { useProjectStore } from "~/features/base/project.store";
+import { randomGameTitle } from "~/utils/random";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "New Project" }];
@@ -25,26 +28,50 @@ function Quote({ className }: { className?: string }) {
 
 function NewGameForm() {
   const navigate = useNavigate();
+  const placeholderTitle = randomGameTitle();
+  const [inputValue, setInputValue] = useState("");
+  const [rollKey, setRollKey] = useState(0);
 
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const formData = new FormData(event.target as HTMLFormElement);
-    const title = formData.get("title") as string;
-    useProjectStore.getState().setTitle(title);
-
+    useProjectStore.getState().setTitle(inputValue);
     navigate("/");
+  };
+
+  const handleRandomize = () => {
+    setInputValue(randomGameTitle());
+    setRollKey((key) => key + 1);
   };
 
   return (
     <form className="grid gap-4" onSubmit={handleSubmit}>
-      <TextInput
-        name="title"
-        placeholder="Rocky Galaxy"
-        label="Project title"
-        required
-        autoFocus
-      />
+      <p className="flex flex-row gap-2 items-center">
+        <TextInput
+          name="title"
+          value={inputValue}
+          onChange={(event) => setInputValue(event.target.value)}
+          placeholder={placeholderTitle}
+          label="Project title"
+          required
+          autoFocus
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          icon={DiceThreeIcon}
+          iconSize={48}
+          iconKey={rollKey}
+          title="Randomize!"
+          onClick={handleRandomize}
+          iconClassName={clsx(
+            "mt-6",
+            rollKey > 0 &&
+              "motion-safe:animate-[spin_0.45s_ease-in-out_1] motion-reduce:animate-none",
+          )}
+        />
+      </p>
       <p className="text-sand-600 text-sm flex flex-row gap-4 items-center">
         <Button type="submit" className="w-fit">
           Create project

@@ -40,16 +40,19 @@ const nouns = [
   "Village",
   "City",
   "Kingdom",
-  "Shimmer",
   "Sparkle",
   "Glitter",
   "Flame",
-  "Shadow",
   "Whisper",
-  "Echo",
+  "Echoes",
   "Dream",
   "Journey",
   "Odyssey",
+  "Vengeance",
+  "Revolution",
+  "Fight",
+  "Battle",
+  "Race",
 ];
 
 export function randomGameTitle(): string {
