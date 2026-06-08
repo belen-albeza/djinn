@@ -1,10 +1,10 @@
-import clsx from "clsx";
 import { ListIcon, PlusIcon } from "@phosphor-icons/react";
 import { useMatch, useNavigate } from "react-router";
 import { useState } from "react";
 
 import { MenuItem } from "./menu-item";
 import { ConfirmNewProjectModal } from "./confirm-new-project-modal";
+import { LoadProjectErrorModal } from "./load-project-error-modal";
 import { downloadProject, loadProject } from "./project-io";
 
 export default function MainMenu() {
@@ -12,6 +12,15 @@ export default function MainMenu() {
   const isOnNewProjectRoute = !!(useMatch({ path: "/new" }) ?? false);
   const [confirmNewProjectModalOpen, setConfirmNewProjectModalOpen] =
     useState(false);
+  const [loadProjectErrorModalOpen, setLoadProjectErrorModalOpen] =
+    useState(false);
+
+  async function handleLoadProject() {
+    const result = await loadProject();
+    if (result === "error") {
+      setLoadProjectErrorModalOpen(true);
+    }
+  }
 
   function handleNewProject() {
     setConfirmNewProjectModalOpen(true);
@@ -44,13 +53,17 @@ export default function MainMenu() {
         >
           New Project
         </MenuItem>
-        <MenuItem onClick={loadProject}>Open Project</MenuItem>
+        <MenuItem onClick={handleLoadProject}>Open Project</MenuItem>
         <MenuItem onClick={downloadProject}>Download</MenuItem>
       </menu>
       <ConfirmNewProjectModal
         open={confirmNewProjectModalOpen}
         onCancel={() => setConfirmNewProjectModalOpen(false)}
         onConfirm={handleConfirmNewProject}
+      />
+      <LoadProjectErrorModal
+        open={loadProjectErrorModalOpen}
+        onClose={() => setLoadProjectErrorModalOpen(false)}
       />
     </>
   );

@@ -12,18 +12,21 @@ export function ConfirmNewProjectModal({
   onConfirm: () => void;
 }) {
   const projectTitle = useProjectStore((state) => state.title);
+  const header = (
+    <>
+      <p className="text-label">Discard changes</p>
+      <h2 className="text-heading">Start a new project?</h2>
+    </>
+  );
 
   return (
     <Modal
       open={open}
       onClose={onCancel}
+      header={header}
       variant="destructive"
       className="max-w-md"
     >
-      <header>
-        <p className="text-label">Discard changes</p>
-        <h2 className="text-heading">Start a new project?</h2>
-      </header>
       <p className="text-body">
         Are you sure? The current project{" "}
         <b className="text-ink">{projectTitle ? `${projectTitle}` : ""}</b> will

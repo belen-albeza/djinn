@@ -49,16 +49,20 @@ function loadFile(): Promise<string | null> {
   });
 }
 
-export async function loadProject() {
+export async function loadProject(): Promise<
+  "success" | "cancelled" | "error"
+> {
   try {
     const data = await loadFile();
     if (!data) {
-      throw new Error("No file selected");
+      return "cancelled";
     }
     const project = JSON.parse(data);
     // TODO: validate the project structure
     useProjectStore.getState().setProject(project);
+    return "success";
   } catch (error) {
     console.error("Invalid file", error);
+    return "error";
   }
 }
