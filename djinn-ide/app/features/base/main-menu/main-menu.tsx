@@ -1,98 +1,28 @@
-import clsx from "clsx";
 import { ListIcon, PlusIcon } from "@phosphor-icons/react";
-import type { Icon as IconType } from "@phosphor-icons/react";
 import { useMatch, useNavigate } from "react-router";
-
-import { useProjectStore } from "~/features/base/project.store";
-import { Modal } from "~/ui/modal";
-import Button from "~/ui/button";
 import { useState } from "react";
 
-interface MenuItemProps {
-  children: React.ReactNode;
-  icon?: IconType;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-}
-
-function MenuItem({
-  children,
-  icon,
-  onClick,
-  disabled,
-  className,
-  ...other
-}: MenuItemProps) {
-  const Icon = icon;
-
-  return (
-    <li
-      className={clsx(
-        "py-2 px-4",
-        !disabled && "hover:bg-burst hover:text-ink",
-        className,
-      )}
-      {...other}
-    >
-      <button
-        disabled={disabled}
-        onClick={onClick}
-        popoverTarget="main-menu"
-        popoverTargetAction="hide"
-        className="w-full text-left text-sm font-semibold flex direction-row gap-1 items-center disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {Icon && <Icon size={12} weight="bold" />}
-        {children}
-      </button>
-    </li>
-  );
-}
-
-export function ConfirmNewProjectModal({
-  open,
-  onCancel,
-  onConfirm,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  const projectTitle = useProjectStore((state) => state.title);
-
-  return (
-    <Modal
-      open={open}
-      onClose={onCancel}
-      variant="destructive"
-      className="max-w-md"
-    >
-      <header>
-        <p className="text-label">Discard changes</p>
-        <h2 className="text-heading">Start a new project?</h2>
-      </header>
-      <p className="text-body">
-        Are you sure? The current project{" "}
-        <b className="text-ink">{projectTitle ? `${projectTitle}` : ""}</b> will
-        be lost. This cannot be undone.
-      </p>
-      <footer className="flex flex-row gap-2 justify-end">
-        <Button variant="ghost" onClick={onCancel}>
-          Stay editing
-        </Button>
-        <Button variant="destructive" onClick={onConfirm}>
-          Discard & create
-        </Button>
-      </footer>
-    </Modal>
-  );
-}
+import { MenuItem } from "./menu-item";
+import { ConfirmNewProjectModal } from "./confirm-new-project-modal";
+import { LoadProjectErrorModal } from "./load-project-error-modal";
+import { downloadProject, loadProject } from "./project-io";
 
 export default function MainMenu() {
   const navigate = useNavigate();
   const isOnNewProjectRoute = !!(useMatch({ path: "/new" }) ?? false);
   const [confirmNewProjectModalOpen, setConfirmNewProjectModalOpen] =
     useState(false);
+  const [loadProjectErrorModalOpen, setLoadProjectErrorModalOpen] =
+    useState(false);
+
+  async function handleLoadProject() {
+    const result = await loadProject();
+    if (result === "error") {
+      setLoadProjectErrorModalOpen(true);
+    } else if (result === "success") {
+      navigate("/");
+    }
+  }
 
   function handleNewProject() {
     setConfirmNewProjectModalOpen(true);
@@ -125,13 +55,17 @@ export default function MainMenu() {
         >
           New Project
         </MenuItem>
-        <MenuItem disabled>Open Project</MenuItem>
-        <MenuItem disabled>Download</MenuItem>
+        <MenuItem onClick={handleLoadProject}>Open Project</MenuItem>
+        <MenuItem onClick={downloadProject}>Download</MenuItem>
       </menu>
       <ConfirmNewProjectModal
         open={confirmNewProjectModalOpen}
         onCancel={() => setConfirmNewProjectModalOpen(false)}
         onConfirm={handleConfirmNewProject}
+      />
+      <LoadProjectErrorModal
+        open={loadProjectErrorModalOpen}
+        onClose={() => setLoadProjectErrorModalOpen(false)}
       />
     </>
   );

@@ -1,18 +1,36 @@
 import { cn } from "~/utils/cn";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
-import { XIcon } from "@phosphor-icons/react";
+import {
+  XIcon,
+  SkullIcon,
+  WarningIcon,
+  ChatDotsIcon,
+} from "@phosphor-icons/react";
 
 import Button from "~/ui/button";
 
-type ModalVariant = "neutral" | "destructive";
+type ModalVariant = "neutral" | "destructive" | "error";
 
 const surfaceClasses: Record<ModalVariant, string> = {
   neutral:
     "bg-[linear-gradient(to_bottom,var(--color-ink)_6px,var(--color-paper)_6px)]",
   destructive:
     "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-paper)_6px)]",
+  error:
+    "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-paper)_6px)]",
 };
+
+function LevelIcon({ level }: { level: ModalVariant }) {
+  switch (level) {
+    case "neutral":
+      return <ChatDotsIcon size={32} className="text-ink" />;
+    case "destructive":
+      return <WarningIcon size={32} className="text-error-700" />;
+    case "error":
+      return <SkullIcon size={32} className="text-error-700" />;
+  }
+}
 
 interface ModalProps {
   children: React.ReactNode;
@@ -20,11 +38,13 @@ interface ModalProps {
   onClose?: () => void;
   variant?: ModalVariant;
   className?: string;
+  header?: React.ReactNode;
 }
 
 export function Modal({
-  children,
   open,
+  header,
+  children,
   onClose,
   variant = "neutral",
   className,
@@ -57,11 +77,20 @@ export function Modal({
         className,
       )}
     >
-      <div className="grid gap-4 grid-auto-rows">{children}</div>
+      <div className="grid gap-4 grid-auto-rows">
+        {header && (
+          <header className="grid grid-cols-[auto_1fr] gap-2 items-center">
+            <LevelIcon level={variant} />
+            <div>{header}</div>
+          </header>
+        )}
+        {children}
+      </div>
       <Button
         variant="ghost"
         onClick={() => onClose?.()}
         icon={XIcon}
+        iconWeight="bold"
         aria-label="Close"
         className="absolute top-4 right-4 hover:bg-sand-100 p-1 rounded-sharp"
       />

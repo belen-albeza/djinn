@@ -1,13 +1,14 @@
-import { type Icon as IconType } from "@phosphor-icons/react";
+import { type Icon as IconType, type IconWeight } from "@phosphor-icons/react";
 import { cn } from "~/utils/cn";
 
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "ghost" | "primary" | "destructive";
+  variant?: "ghost" | "primary" | "destructive" | "secondary";
   disabled?: boolean;
   onClick?: () => void;
   icon?: IconType;
+  iconWeight?: IconWeight;
   iconSize?: number;
   iconClassName?: string;
   iconKey?: string | number;
@@ -17,6 +18,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export default function Button({
   children,
   icon,
+  iconWeight,
   iconSize = 16,
   variant = "primary",
   className,
@@ -46,6 +48,7 @@ export default function Button({
         "transition-[transform,box-shadow,background-color,color] duration-150",
         "disabled:translate-none disabled:shadow-grotesk-ink",
         "font-bold text-base capitalize ",
+        variant === "secondary" && "bg-paper text-ink hover:bg-sand-100",
         className,
       )}
       {...props}
@@ -54,6 +57,7 @@ export default function Button({
         <Icon
           key={iconKey}
           size={iconSize}
+          weight={iconWeight}
           aria-hidden={!ariaLabel}
           aria-label={ariaLabel}
           className={iconClassName}
