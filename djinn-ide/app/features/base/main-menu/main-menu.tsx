@@ -2,8 +2,12 @@ import clsx from "clsx";
 import { ListIcon, PlusIcon } from "@phosphor-icons/react";
 import type { Icon as IconType } from "@phosphor-icons/react";
 import { useMatch, useNavigate } from "react-router";
+import slugify from "slugify";
 
-import { useProjectStore } from "~/features/base/project.store";
+import {
+  toProjectSnapshot,
+  useProjectStore,
+} from "~/features/base/project.store";
 import { Modal } from "~/ui/modal";
 import Button from "~/ui/button";
 import { useState } from "react";
@@ -88,6 +92,27 @@ export function ConfirmNewProjectModal({
   );
 }
 
+function downloadProject() {
+  const project = toProjectSnapshot(useProjectStore.getState());
+  // build a JSON blob to download
+  const json = JSON.stringify(project);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  // build a filename from the project title, discarding special characters
+  const { title } = project;
+  const filename = `${slugify(title, { lower: true })}.json`;
+
+  // trigger download by clicking an orphan, temporary link
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  // clean up the temporary URL
+  URL.revokeObjectURL(url);
+}
+
 export default function MainMenu() {
   const navigate = useNavigate();
   const isOnNewProjectRoute = !!(useMatch({ path: "/new" }) ?? false);
@@ -126,7 +151,7 @@ export default function MainMenu() {
           New Project
         </MenuItem>
         <MenuItem disabled>Open Project</MenuItem>
-        <MenuItem disabled>Download</MenuItem>
+        <MenuItem onClick={downloadProject}>Download</MenuItem>
       </menu>
       <ConfirmNewProjectModal
         open={confirmNewProjectModalOpen}

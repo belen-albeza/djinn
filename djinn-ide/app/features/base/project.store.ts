@@ -15,6 +15,10 @@ interface ProjectStore extends ProjectSnapshot {
   reset: () => void;
 }
 
+export function toProjectSnapshot(state: ProjectStore): ProjectSnapshot {
+  return { title: state.title };
+}
+
 export const useProjectStore = create<ProjectStore>()(
   persist(
     (set) => ({
@@ -25,7 +29,7 @@ export const useProjectStore = create<ProjectStore>()(
     }),
     {
       name: "project",
-      partialize: (state) => ({ title: state.title }),
+      partialize: toProjectSnapshot,
     },
   ),
 );
