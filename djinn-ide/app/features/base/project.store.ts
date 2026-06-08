@@ -1,9 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { z } from "zod";
 
-export type ProjectSnapshot = {
-  title: string;
-};
+export const projectSchema = z.object({
+  title: z.string(),
+});
+
+export type ProjectSnapshot = z.infer<typeof projectSchema>;
 
 export const defaultProject: ProjectSnapshot = {
   title: "",
@@ -16,7 +19,7 @@ interface ProjectStore extends ProjectSnapshot {
 }
 
 export function toProjectSnapshot(state: ProjectStore): ProjectSnapshot {
-  return { title: state.title };
+  return projectSchema.parse(state);
 }
 
 export const useProjectStore = create<ProjectStore>()(

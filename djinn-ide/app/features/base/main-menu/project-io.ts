@@ -2,6 +2,7 @@ import slugify from "slugify";
 import {
   toProjectSnapshot,
   useProjectStore,
+  projectSchema,
 } from "~/features/base/project.store";
 
 export function downloadProject() {
@@ -57,9 +58,13 @@ export async function loadProject(): Promise<
     if (!data) {
       return "cancelled";
     }
-    const project = JSON.parse(data);
-    // TODO: validate the project structure
-    useProjectStore.getState().setProject(project);
+    const rawJson = JSON.parse(data);
+    const result = projectSchema.safeParse(rawJson);
+    if (!result.success) {
+      return "error";
+    }
+
+    useProjectStore.getState().setProject(result.data);
     return "success";
   } catch (error) {
     console.error("Invalid file", error);
