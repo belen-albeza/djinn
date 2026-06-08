@@ -19,6 +19,8 @@ export default function MainMenu() {
     const result = await loadProject();
     if (result === "error") {
       setLoadProjectErrorModalOpen(true);
+    } else if (result === "success") {
+      navigate("/");
     }
   }
 

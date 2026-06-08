@@ -4,57 +4,31 @@ import {
   useProjectStore,
   projectSchema,
 } from "~/features/base/project.store";
+import {
+  saveFileToDisk,
+  pickFileFromDisk,
+  type SaveFile,
+  type PickFile,
+} from "./project-io-ports";
 
-export function downloadProject() {
+export function downloadProject(save: SaveFile = saveFileToDisk) {
   const project = toProjectSnapshot(useProjectStore.getState());
   // build a JSON blob to download
   const json = JSON.stringify(project);
   const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
 
-  // build a filename from the project title, discarding special characters
-  const { title } = project;
-  const filename = `${slugify(title, { lower: true })}.json`;
+  // Build a filename from the project title, discarding special characters.
+  // If the title is empty, use "djinn" as the default.
+  const filename = `${slugify(project.title, { lower: true, strict: true }) || "djinn"}.json`;
 
-  // trigger download by clicking an orphan, temporary link
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-
-  // clean up the temporary URL
-  URL.revokeObjectURL(url);
+  save(filename, blob);
 }
 
-function loadFile(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "application/json";
-    fileInput.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (!file) {
-        resolve(null);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        const result = loadEvent.target?.result;
-        resolve(typeof result === "string" ? result : null);
-      };
-      reader.onerror = () => resolve(null);
-      reader.readAsText(file);
-    };
-    fileInput.click();
-  });
-}
-
-export async function loadProject(): Promise<
-  "success" | "cancelled" | "error"
-> {
+export async function loadProject(
+  pick: PickFile = pickFileFromDisk,
+): Promise<"success" | "cancelled" | "error"> {
   try {
-    const data = await loadFile();
+    const data = await pick();
     if (!data) {
       return "cancelled";
     }

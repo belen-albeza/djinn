@@ -16,6 +16,7 @@ export default function Header() {
           className="font-mono text-m uppercase font-semibold text-sand-400"
           editButtonClassName="text-sand-400 hover:text-burst"
           editIconAriaLabel="Edit title"
+          required
         />
       ) : (
         <p className="font-mono text-m uppercase font-semibold text-sand-400 before:content-['•'] before:text-burst flex direction-row gap-1">
