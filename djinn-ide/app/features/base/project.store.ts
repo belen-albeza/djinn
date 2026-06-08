@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type ProjectSnapshot = {
   title: string;
@@ -14,9 +15,17 @@ interface ProjectStore extends ProjectSnapshot {
   reset: () => void;
 }
 
-export const useProjectStore = create<ProjectStore>((set) => ({
-  ...defaultProject,
-  reset: () => set(defaultProject),
-  setProject: (project) => set({ ...defaultProject, ...project }),
-  setTitle: (title) => set({ title }),
-}));
+export const useProjectStore = create<ProjectStore>()(
+  persist(
+    (set) => ({
+      ...defaultProject,
+      reset: () => set(defaultProject),
+      setProject: (project) => set({ ...defaultProject, ...project }),
+      setTitle: (title) => set({ title }),
+    }),
+    {
+      name: "project",
+      partialize: (state) => ({ title: state.title }),
+    },
+  ),
+);
