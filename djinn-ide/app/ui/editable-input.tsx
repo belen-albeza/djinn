@@ -33,12 +33,12 @@ export default function EditableInput({
   }, [isEditing]);
 
   function startEditing() {
+    skipBlurCommitRef.current = false;
     setEditValue(value);
     setIsEditing(true);
   }
 
   function commitEdit() {
-    skipBlurCommitRef.current = true;
     onChange(editValue);
     setIsEditing(false);
   }
@@ -60,6 +60,7 @@ export default function EditableInput({
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
+      skipBlurCommitRef.current = true;
       commitEdit();
     } else if (event.key === "Escape") {
       event.preventDefault();
