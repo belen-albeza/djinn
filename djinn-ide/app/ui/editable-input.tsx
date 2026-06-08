@@ -10,11 +10,13 @@ interface EditableInputProps {
   editButtonClassName?: string;
   editIconAriaLabel?: string;
   type?: "text" | "number" | "email" | "password" | "tel" | "url";
+  required?: boolean;
 }
 
 export default function EditableInput({
   value,
   onChange,
+  required,
   className,
   editButtonClassName,
   editIconAriaLabel = "Edit",
@@ -39,6 +41,11 @@ export default function EditableInput({
   }
 
   function commitEdit() {
+    if (required && !editValue) {
+      cancelEdit();
+      return;
+    }
+
     onChange(editValue);
     setIsEditing(false);
   }
@@ -97,6 +104,7 @@ export default function EditableInput({
             onChange={(event) => setEditValue(event.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
+            required={required}
             className={clsx(
               className,
               "col-start-1 row-start-1 m-0 w-0 min-w-full max-w-full appearance-none border-0 bg-transparent p-0 shadow-none outline-none ring-0",
