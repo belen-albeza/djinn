@@ -9,7 +9,6 @@ import {
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { renderWithRouter } from "#test/testing-library";
 import MainMenu from "./main-menu";
-import { ConfirmNewProjectModal } from "./main-menu";
 
 describe("MainMenu", () => {
   it("Shows the main menu", () => {

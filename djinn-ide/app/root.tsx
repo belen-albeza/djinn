@@ -14,7 +14,6 @@ import {
   useProjectStore,
   type ProjectSnapshot,
 } from "~/features/base/project.store";
-import { randomGameTitle } from "~/utils/random";
 
 import "./app.css";
 
@@ -48,11 +47,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </body>
     </html>
   );
-}
-
-export function clientLoader(): ProjectSnapshot {
-  // TODO: attempt to load project from local storage
-  return useProjectStore.getState();
 }
 
 export default function App() {
