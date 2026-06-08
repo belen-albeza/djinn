@@ -1,10 +1,10 @@
-import clsx from "clsx";
 import { type Icon as IconType } from "@phosphor-icons/react";
+import { cn } from "~/utils/cn";
 
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "ghost" | "primary";
+  variant?: "ghost" | "primary" | "destructive";
   disabled?: boolean;
   onClick?: () => void;
   icon?: IconType;
@@ -30,16 +30,22 @@ export default function Button({
   return (
     <button
       title={ariaLabel}
-      className={clsx(
+      className={cn(
         variant === "ghost" &&
-          "bg-transparent text-current transition-colors duration-250",
-        variant === "primary" && [
-          "bg-burst text-paper font-bold text-lg capitalize px-4 py-2 rounded-sharp border-ui border-ink shadow-grotesk-ink",
-          "hover:-translate-x-px hover:-translate-y-px hover:bg-burst-400 hover:text-paper hover:shadow-grotesk-ink-pop",
+          "bg-transparent transition-colors duration-250 font-bold text-sand-600 hover:text-ink",
+        children && "px-4 py-2",
+        variant !== "ghost" && [
+          "shadow-grotesk-ink",
+          "hover:-translate-x-px hover:-translate-y-px hover:shadow-grotesk-ink-pop",
           "active:translate-x-px active:translate-y-px active:shadow-grotesk-ink-pressed",
+          "rounded-sharp border-ui border-ink ",
         ],
+        variant === "primary" && "bg-burst text-paper hover:bg-burst-400",
+        variant === "destructive" &&
+          "bg-error-700 text-paper hover:bg-error-400",
         "transition-[transform,box-shadow,background-color,color] duration-150",
         "disabled:translate-none disabled:shadow-grotesk-ink",
+        "font-bold text-base capitalize ",
         className,
       )}
       {...props}

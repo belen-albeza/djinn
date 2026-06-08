@@ -11,10 +11,12 @@ export const defaultProject: ProjectSnapshot = {
 interface ProjectStore extends ProjectSnapshot {
   setProject: (project: ProjectSnapshot) => void;
   setTitle: (title: string) => void;
+  reset: () => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
   ...defaultProject,
+  reset: () => set(defaultProject),
   setProject: (project) => set({ ...defaultProject, ...project }),
   setTitle: (title) => set({ title }),
 }));
