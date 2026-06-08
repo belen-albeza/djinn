@@ -28,10 +28,7 @@ export default function TextInput({
 
   return (
     <span className={className}>
-      <label
-        htmlFor={id}
-        className="mb-2 block text-xs font-medium tracking-wide uppercase text-sand-600"
-      >
+      <label htmlFor={id} className="mb-2 block text-label">
         {label}
       </label>
       <input

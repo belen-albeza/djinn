@@ -32,6 +32,8 @@ function NewGameForm() {
   const [inputValue, setInputValue] = useState("");
   const [rollKey, setRollKey] = useState(0);
 
+  useProjectStore.getState().reset();
+
   const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
