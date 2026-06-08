@@ -113,6 +113,33 @@ function downloadProject() {
   URL.revokeObjectURL(url);
 }
 
+function loadProject() {
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "application/json";
+  fileInput.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          try {
+            const project = JSON.parse(result);
+            // TODO: validate the project
+            useProjectStore.getState().setProject(project);
+          } catch (error) {
+            // TODO: show a toast or modal to the user
+            console.error("Invalid file", error);
+          }
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  fileInput.click();
+}
+
 export default function MainMenu() {
   const navigate = useNavigate();
   const isOnNewProjectRoute = !!(useMatch({ path: "/new" }) ?? false);
@@ -150,7 +177,7 @@ export default function MainMenu() {
         >
           New Project
         </MenuItem>
-        <MenuItem disabled>Open Project</MenuItem>
+        <MenuItem onClick={loadProject}>Open Project</MenuItem>
         <MenuItem onClick={downloadProject}>Download</MenuItem>
       </menu>
       <ConfirmNewProjectModal
