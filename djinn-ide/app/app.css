@@ -69,8 +69,35 @@
   @apply text-base text-sand-600;
 }
 
+@utility text-small {
+  @apply text-sm text-sand-600;
+}
+
 @utility text-heading {
   @apply text-xl font-bold text-ink;
+}
+
+@utility scrollbar-djinn {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-sand-200) var(--color-sand-50);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--color-sand-50);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-sand-200);
+    border-radius: var(--radius-sharp);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-sand-400);
+  }
 }
 
 body {

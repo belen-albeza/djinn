@@ -2,6 +2,7 @@ import { redirect } from "react-router";
 
 import type { Route } from "./+types/home";
 import { useProjectStore } from "~/features/base/project.store";
+import CodeEditor from "~/features/code/code-editor";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Djinn IDE" }];
@@ -16,5 +17,5 @@ export function clientLoader() {
 }
 
 export default function Home() {
-  return <p>…</p>;
+  return <CodeEditor />;
 }
