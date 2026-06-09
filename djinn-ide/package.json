@@ -11,10 +11,14 @@
     "test:watch": "bun test --watch"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.1",
     "@phosphor-icons/react": "^2.1.10",
     "@react-router/node": "7.16.0",
     "@react-router/serve": "7.16.0",
     "clsx": "^2.1.1",
+    "codemirror": "^6.0.2",
     "isbot": "^5.1.36",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
