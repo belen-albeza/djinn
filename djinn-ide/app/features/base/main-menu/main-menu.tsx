@@ -28,6 +28,10 @@ export default function MainMenu() {
     setConfirmNewProjectModalOpen(true);
   }
 
+  function handleDownloadProject() {
+    downloadProject();
+  }
+
   function handleConfirmNewProject() {
     setConfirmNewProjectModalOpen(false);
     navigate("/new");
@@ -56,7 +60,7 @@ export default function MainMenu() {
           New Project
         </MenuItem>
         <MenuItem onClick={handleLoadProject}>Open Project</MenuItem>
-        <MenuItem onClick={downloadProject}>Download</MenuItem>
+        <MenuItem onClick={handleDownloadProject}>Download</MenuItem>
       </menu>
       <ConfirmNewProjectModal
         open={confirmNewProjectModalOpen}
