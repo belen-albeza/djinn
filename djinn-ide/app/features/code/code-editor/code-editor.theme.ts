@@ -19,7 +19,7 @@ export const codeEditorTheme = EditorView.theme({
     borderLeftColor: "var(--color-burst)",
   },
   ".cm-activeLine": {
-    backgroundColor: "var(--color-sand-100)",
+    backgroundColor: "var(--color-sand-200-30)",
   },
   ".cm-gutters": {
     backgroundColor: "var(--color-sand-50)",

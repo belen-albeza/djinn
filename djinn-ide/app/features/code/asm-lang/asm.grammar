@@ -1,0 +1,52 @@
+@top Program { item* }
+
+item {
+  Opcode |
+  Bool |
+  Word |
+  ProcessType |
+  Label |
+  Symbol |
+  Variable |
+  Number |
+  String |
+  PushSigil |
+  Punctuation |
+  LineComment
+}
+
+// Opcodes and booleans are bare words. Djinn is case-insensitive, so we can't
+// list them as plain string tokens (Lezer tokens are case-sensitive). Instead we
+// lex a generic Word and specialize it in code (see asm-tokens.ts).
+@external specialize { Word } specializeWord from "./asm-tokens" { Opcode, Bool }
+
+@tokens {
+  LineComment { ";" ![\n]* }
+
+  String { '"' (!["\\] | "\\" _)* '"' }
+
+  Number { "-"? $[0-9]+ ("." $[0-9]+)? }
+
+  idChar { $[a-zA-Z0-9-] }
+
+  Word { $[a-zA-Z] idChar* }
+
+  ProcessType { "~" idChar+ }
+  Label       { "@" idChar+ }
+  Symbol      { ":" idChar+ }
+  Variable    { "$" idChar+ }
+
+  PushSigil { "#" }
+
+  // Standalone ":" is the block-declaration colon (e.g. ~main: / @loop:)
+  Punctuation { "(" | ")" | "," | ":" }
+
+  space { $[ \t\r\n]+ }
+
+  @precedence {
+    LineComment, ProcessType, Label, Symbol, Variable,
+    Number, Word, PushSigil, Punctuation
+  }
+}
+
+@skip { space }
