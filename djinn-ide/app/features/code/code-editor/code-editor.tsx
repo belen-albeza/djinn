@@ -7,6 +7,7 @@ import { defaultKeymap } from "@codemirror/commands";
 
 import { codeEditorTheme } from "./code-editor.theme";
 import { useProjectStore } from "~/features/base/project.store";
+import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 
 const customShortcuts = keymap.of([
   {
@@ -14,6 +15,7 @@ const customShortcuts = keymap.of([
     preventDefault: true,
     run: (view) => {
       useProjectStore.getState().setSourceCode(view.state.doc.toString());
+      useStatusBarStore.getState().notifySaved();
       return true;
     },
   },
@@ -39,20 +41,18 @@ export default function CodeEditor() {
       parent: editorRef.current!,
     });
 
+    // autofocus the editor on mount
+    view.focus();
+
     return () => {
       view.destroy();
     };
   }, [editorRef.current]);
 
   return (
-    <article className="grid h-full min-h-0 w-full grid-rows-[1fr_auto] overflow-hidden">
-      <section
-        ref={editorRef}
-        className="h-full min-h-0 w-full overflow-hidden"
-      ></section>
-      <footer className="px-4 py-1 border-t border-sand-200 bg-sand-100">
-        <p className="text-small">No errors.</p>
-      </footer>
-    </article>
+    <section
+      ref={editorRef}
+      className="h-full min-h-0 w-full overflow-hidden"
+    ></section>
   );
 }

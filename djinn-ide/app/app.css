@@ -77,6 +77,41 @@
   @apply text-xl font-bold text-ink;
 }
 
+/* animations */
+@theme {
+  --animate-saved-flash: saved-flash 1.5s ease-in-out;
+}
+
+@keyframes saved-flash {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  38% {
+    transform: translateY(0);
+  }
+
+  52% {
+    transform: translateY(-1px);
+  }
+
+  66% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
 @utility scrollbar-djinn {
   scrollbar-width: thin;
   scrollbar-color: var(--color-sand-200) var(--color-sand-50);
@@ -103,3 +138,4 @@
 body {
   @apply bg-sand-50 text-ink;
 }
+
