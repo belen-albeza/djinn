@@ -5,7 +5,7 @@ export const codeEditorTheme = EditorView.theme({
     backgroundColor: "var(--color-sand-50)",
     color: "var(--color-ink)",
     fontFamily: "var(--font-mono)",
-    fontSize: "0.875rem",
+    fontSize: "1.25rem",
     height: "100%",
     maxHeight: "100%",
     display: "flex",
