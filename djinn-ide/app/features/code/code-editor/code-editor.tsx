@@ -20,6 +20,17 @@ const customShortcuts = keymap.of([
       return true;
     },
   },
+  {
+    key: "Mod-b",
+    preventDefault: true,
+    run: (view) => {
+      // TODO: launch a build process and get the errors
+      useStatusBarStore
+        .getState()
+        .setErrors(["Error at (1, 0): Empty main program."]);
+      return true;
+    },
+  },
 ]);
 
 export default function CodeEditor() {
