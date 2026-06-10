@@ -4,17 +4,20 @@ import { z } from "zod";
 
 export const projectSchema = z.object({
   title: z.string(),
+  sourceCode: z.string(),
 });
 
 export type ProjectSnapshot = z.infer<typeof projectSchema>;
 
 export const defaultProject: ProjectSnapshot = {
   title: "",
+  sourceCode: "",
 };
 
 interface ProjectStore extends ProjectSnapshot {
   setProject: (project: ProjectSnapshot) => void;
   setTitle: (title: string) => void;
+  setSourceCode: (source: string) => void;
   reset: () => void;
 }
 
@@ -29,6 +32,7 @@ export const useProjectStore = create<ProjectStore>()(
       reset: () => set(defaultProject),
       setProject: (project) => set({ ...defaultProject, ...project }),
       setTitle: (title) => set({ title }),
+      setSourceCode: (source) => set({ sourceCode: source }),
     }),
     {
       name: "project",
