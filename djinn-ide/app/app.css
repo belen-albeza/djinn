@@ -22,6 +22,7 @@
   --color-sand-400: #A09B93;
   --color-sand-600: #6B6660;
   --color-sand-800: #3A3632;
+  --color-sand-200-30: rgba(168, 163, 155, 0.3);
 
   /* accent color */
   --color-burst: #FF4D00;
@@ -38,9 +39,9 @@
   --color-error-100: #FCE4EC;
   --color-error-400: #EC407A;
   --color-error-700: #C2185B;
-  --color-info-100: #E3F2FD;
-  --color-info-400: #42A5F5;
-  --color-info-700: #1565C0;
+  --color-info-100: #C8E6F4;
+  --color-info-400: #18A0D4;
+  --color-info-700: #0A5F7A;
 
   --shadow-grotesk: 4px 4px 0 var(--color-burst);
   --shadow-grotesk-ink: 4px 4px 0 var(--color-ink);

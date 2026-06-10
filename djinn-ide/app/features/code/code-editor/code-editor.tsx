@@ -8,6 +8,7 @@ import { defaultKeymap } from "@codemirror/commands";
 import { codeEditorTheme } from "./code-editor.theme";
 import { useProjectStore } from "~/features/base/project.store";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
+import { asm } from "../asm-lang/asm-lezer";
 
 const customShortcuts = keymap.of([
   {
@@ -34,6 +35,7 @@ export default function CodeEditor() {
         codeEditorTheme,
         keymap.of(defaultKeymap),
         customShortcuts,
+        asm(),
       ],
     });
     const view = new EditorView({
