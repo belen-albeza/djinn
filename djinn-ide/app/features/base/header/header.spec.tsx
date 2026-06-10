@@ -14,7 +14,7 @@ import {
 import Header from "./header";
 
 function anyProjectWithTitle(title: string): ProjectSnapshot {
-  return { title };
+  return { title, sourceCode: "" };
 }
 
 beforeEach(() => {

@@ -8,7 +8,9 @@ beforeEach(() => {
 
 describe("downloadProject", () => {
   it("Downloads the current project as JSON", async () => {
-    useProjectStore.getState().setProject({ title: "Piñata: 🪅!" });
+    useProjectStore
+      .getState()
+      .setProject({ title: "Piñata: 🪅!", sourceCode: "; Hello, world!" });
 
     let saved: { filename: string; blob: Blob } | undefined;
     downloadProject((filename, blob) => {
@@ -19,6 +21,7 @@ describe("downloadProject", () => {
     expect(saved?.blob.type).toBe("application/json");
     expect(JSON.parse(await saved!.blob.text())).toEqual({
       title: "Piñata: 🪅!",
+      sourceCode: "; Hello, world!",
     });
   });
 });
@@ -26,11 +29,12 @@ describe("downloadProject", () => {
 describe("loadProject", () => {
   it("Loads a chosen project into the store", async () => {
     const result = await loadProject(async () =>
-      JSON.stringify({ title: "Loaded" }),
+      JSON.stringify({ title: "Loaded", sourceCode: "; Hello, world!" }),
     );
 
     expect(result).toBe("success");
     expect(useProjectStore.getState().title).toBe("Loaded");
+    expect(useProjectStore.getState().sourceCode).toBe("; Hello, world!");
   });
 
   it("Reports an error for malformed project data", async () => {
