@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { cn } from "~/utils/cn";
 import type { Icon as IconType } from "@phosphor-icons/react";
 
 interface MenuItemProps {
@@ -21,11 +21,7 @@ export function MenuItem({
 
   return (
     <li
-      className={clsx(
-        "py-2 px-4",
-        !disabled && "hover:bg-burst hover:text-ink",
-        className,
-      )}
+      className={cn(!disabled && "hover:bg-burst hover:text-ink", className)}
       {...other}
     >
       <button
@@ -33,7 +29,7 @@ export function MenuItem({
         onClick={onClick}
         popoverTarget="main-menu"
         popoverTargetAction="hide"
-        className="w-full text-left text-sm font-semibold flex direction-row gap-1 items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        className="py-2 px-4 w-full text-left text-sm font-semibold flex direction-row gap-1 items-center disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {Icon && <Icon size={12} weight="bold" />}
         {children}
