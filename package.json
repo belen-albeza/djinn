@@ -1,0 +1,4 @@
+{
+  "workspaces": ["djinn-ide", "packages/*"]
+}
+

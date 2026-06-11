@@ -19,6 +19,7 @@
     "@react-router/serve": "7.16.0",
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
+    "djinn-dev-wasm": "",
     "isbot": "^5.1.36",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
