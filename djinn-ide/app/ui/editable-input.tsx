@@ -114,7 +114,7 @@ export default function EditableInput({
           <span
             className={clsx(
               className,
-              "col-start-1 row-start-1 whitespace-pre",
+              "col-start-1 row-start-1 whitespace-pre text-base",
             )}
           >
             {value}
