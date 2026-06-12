@@ -10,6 +10,10 @@ import { useProjectStore } from "~/features/base/project.store";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 import { asm } from "../asm-lang/asm-lezer";
 
+import { build, type BuildErrorList } from "djinn-dev-wasm";
+
+type BuildError = { position: [number, number]; message: string };
+
 const customShortcuts = keymap.of([
   {
     key: "Mod-s",
@@ -23,11 +27,20 @@ const customShortcuts = keymap.of([
   {
     key: "Mod-b",
     preventDefault: true,
+    // TODO: extract the build process to a separate function
     run: (view) => {
-      // TODO: launch a build process and get the errors
-      useStatusBarStore
-        .getState()
-        .setErrors(["Error at (1, 0): Empty main program."]);
+      let errors: string[] = [];
+
+      try {
+        const _emulator = build(useProjectStore.getState().title);
+      } catch (err: any) {
+        errors = (err as BuildErrorList).map(
+          (e) =>
+            `Error at Ln ${e.position[0]}, Col ${e.position[1]}: ${e.message}`,
+        );
+      }
+
+      useStatusBarStore.getState().setErrors(errors);
       return true;
     },
   },
