@@ -10,9 +10,7 @@ import { useProjectStore } from "~/features/base/project.store";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 import { asm } from "../asm-lang/asm-lezer";
 
-import { build, type BuildErrorList } from "djinn-dev-wasm";
-
-type BuildError = { position: [number, number]; message: string };
+import { buildProject } from "../build-project";
 
 const customShortcuts = keymap.of([
   {
@@ -27,20 +25,8 @@ const customShortcuts = keymap.of([
   {
     key: "Mod-b",
     preventDefault: true,
-    // TODO: extract the build process to a separate function
-    run: (view) => {
-      let errors: string[] = [];
-
-      try {
-        const _emulator = build(useProjectStore.getState().title);
-      } catch (err: any) {
-        errors = (err as BuildErrorList).map(
-          (e) =>
-            `Error at Ln ${e.position[0]}, Col ${e.position[1]}: ${e.message}`,
-        );
-      }
-
-      useStatusBarStore.getState().setErrors(errors);
+    run: () => {
+      buildProject();
       return true;
     },
   },
