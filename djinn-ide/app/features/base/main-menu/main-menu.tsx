@@ -41,9 +41,9 @@ export default function MainMenu() {
     <>
       <button
         popoverTarget="main-menu"
-        className="anchor-[--main-menu-button] text-2xl font-bold uppercase text-burst flex items-center gap-2"
+        className="anchor-[--main-menu-button] text-xl font-bold uppercase text-burst flex items-center gap-2"
       >
-        <ListIcon size={24} /> Djinn
+        <ListIcon size={24} className="text-sand-600" weight="bold" /> Djinn
       </button>
 
       <menu
