@@ -1,5 +1,10 @@
 import { it, expect, describe, mock, afterAll, beforeEach } from "bun:test";
-import { render, waitFor } from "@testing-library/react";
+import {
+  render,
+  waitFor,
+  getByTestId,
+  fireEvent,
+} from "@testing-library/react";
 import { mockAsmLezer, restoreAsmLezer } from "#test/asm-lezer";
 import { mockDjinnDevWasm, restoreDjinnDevWasm } from "#test/djinn-dev-wasm";
 import {
@@ -21,21 +26,6 @@ function anyProjectWithSourceCode(sourceCode: string): ProjectSnapshot {
   return { title: "Lorem", sourceCode };
 }
 
-function pressBuildShortcut(element: HTMLElement) {
-  // Happy DOM reports an X11 platform, so CodeMirror maps Mod-b to Ctrl-b.
-  const event = new KeyboardEvent("keydown", {
-    key: "b",
-    code: "b",
-    keyCode: 66,
-    which: 66,
-    ctrlKey: true,
-    bubbles: true,
-    cancelable: true,
-  });
-  Object.defineProperty(event, "synthetic", { value: true });
-  element.dispatchEvent(event);
-}
-
 describe("CodeEditor", () => {
   beforeEach(() => {
     useStatusBarStore.getState().reset();
@@ -48,13 +38,8 @@ describe("CodeEditor", () => {
     useProjectStore.setState(anyProjectWithSourceCode("; Hello, world!"));
     const { container } = render(<CodeEditor />);
 
-    const editor = await waitFor(() => {
-      const content = container.querySelector(".cm-content");
-      if (!content) throw new Error("CodeMirror editor not mounted");
-      return content as HTMLElement;
-    });
-
-    pressBuildShortcut(editor);
+    const editor = getByTestId(container, "code-editor-content");
+    fireEvent.keyDown(editor, { key: "b", ctrlKey: true });
 
     await waitFor(() => {
       expect(build).toHaveBeenCalledWith("Lorem");

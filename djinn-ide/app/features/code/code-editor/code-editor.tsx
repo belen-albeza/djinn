@@ -60,6 +60,9 @@ export default function CodeEditor() {
         keymap.of(defaultKeymap),
         customShortcuts,
         asm(),
+        EditorView.contentAttributes.of({
+          "data-testid": "code-editor-content",
+        }),
       ],
     });
     const view = new EditorView({
