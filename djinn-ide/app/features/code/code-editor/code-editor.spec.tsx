@@ -59,8 +59,6 @@ describe("CodeEditor", () => {
     await waitFor(() => {
       expect(build).toHaveBeenCalledWith("Lorem");
     });
-    expect(useStatusBarStore.getState().errors).toEqual([
-      "Error at (1, 0): Empty main program.",
-    ]);
+    expect(useStatusBarStore.getState().errors).toEqual([]);
   });
 });

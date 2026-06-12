@@ -6,14 +6,46 @@ on:
   pull_request:
 
 jobs:
+  build-wasm:
+    name: build wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Cache wasm package
+        id: wasm-cache
+        uses: actions/cache@v4
+        with:
+          path: packages/djinn-dev-wasm
+          key: djinn-dev-wasm-${{ hashFiles('djinn-rs/**/*.rs', 'djinn-rs/**/Cargo.toml', 'djinn-rs/Cargo.lock') }}
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.wasm-cache.outputs.cache-hit != 'true'
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: jetli/wasm-pack-action@v0.4.0
+        if: steps.wasm-cache.outputs.cache-hit != 'true'
+      - name: Build wasm package
+        if: steps.wasm-cache.outputs.cache-hit != 'true'
+        run: wasm-pack build djinn-rs/djinn-dev-wasm --out-dir ../../packages/djinn-dev-wasm
+      - name: Upload wasm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: djinn-dev-wasm
+          path: packages/djinn-dev-wasm
+
   lint:
     name: lint
+    needs: build-wasm
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: djinn-ide
     steps:
       - uses: actions/checkout@v6
+      - name: Download wasm package
+        uses: actions/download-artifact@v4
+        with:
+          name: djinn-dev-wasm
+          path: packages/djinn-dev-wasm
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -24,12 +56,18 @@ jobs:
 
   build:
     name: build
+    needs: build-wasm
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: djinn-ide
     steps:
       - uses: actions/checkout@v6
+      - name: Download wasm package
+        uses: actions/download-artifact@v4
+        with:
+          name: djinn-dev-wasm
+          path: packages/djinn-dev-wasm
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -47,6 +85,11 @@ jobs:
         working-directory: djinn-ide
     steps:
       - uses: actions/checkout@v6
+      - name: Download wasm package
+        uses: actions/download-artifact@v4
+        with:
+          name: djinn-dev-wasm
+          path: packages/djinn-dev-wasm
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
