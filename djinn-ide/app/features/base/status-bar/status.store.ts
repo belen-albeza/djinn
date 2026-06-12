@@ -1,15 +1,24 @@
 import { create } from "zustand";
 
-interface StatusBarStore {
-  savedTick: number; // increments every time the user saves
+type StatusBarSnapshot = {
+  savedTick: number;
   errors: string[];
+};
+
+interface StatusBarStore extends StatusBarSnapshot {
   notifySaved: () => void;
   setErrors: (errors: string[]) => void;
+  reset: () => void;
 }
 
-export const useStatusBarStore = create<StatusBarStore>((set) => ({
+const defaultStatusBar: StatusBarSnapshot = {
   savedTick: 0,
   errors: [],
+};
+
+export const useStatusBarStore = create<StatusBarStore>((set) => ({
+  ...defaultStatusBar,
   notifySaved: () => set((state) => ({ savedTick: state.savedTick + 1 })),
   setErrors: (errors: string[]) => set({ errors }),
+  reset: () => set(defaultStatusBar),
 }));
