@@ -1,7 +1,7 @@
 use crate::vm::Devices;
 
-const VIDEO_WIDTH: usize = 160;
-const VIDEO_HEIGHT: usize = 144;
+pub const VIDEO_WIDTH: usize = 160;
+pub const VIDEO_HEIGHT: usize = 144;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct VideoDevice {
