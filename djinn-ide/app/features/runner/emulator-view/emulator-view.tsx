@@ -15,10 +15,11 @@ export default function EmulatorView({
   return (
     <Modal open={open} onClose={onClose} className="p-12 bg-sand-100">
       <canvas
-        className={cn(
-          "pixelated bg-black",
-          `w-[${CANVAS_WIDTH * 4}px] h-[${CANVAS_HEIGHT * 4}px]`,
-        )}
+        className={cn("pixelated bg-black")}
+        style={{
+          width: `${CANVAS_WIDTH * 4}px`,
+          height: `${CANVAS_HEIGHT * 4}px`,
+        }}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
       ></canvas>

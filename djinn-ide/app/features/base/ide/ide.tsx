@@ -1,8 +1,7 @@
-import { useState } from "react";
-
 import Header from "../header";
 import StatusBar from "../status-bar";
 import WasmProvider from "../wasm-provider";
+import { useEmulatorStore } from "~/features/runner/emulator.store";
 import { useGlobalShortcuts, globalShortcuts } from "../shortcuts";
 import EmulatorView from "~/features/runner/emulator-view";
 
@@ -11,7 +10,7 @@ interface IdeProps {
 }
 
 export default function Ide({ children }: IdeProps) {
-  const [showEmulatorView, setShowEmulatorView] = useState(true);
+  const showEmulatorView = useEmulatorStore((state) => state.visible);
 
   useGlobalShortcuts(globalShortcuts);
 
@@ -23,7 +22,7 @@ export default function Ide({ children }: IdeProps) {
           {children}
           <EmulatorView
             open={showEmulatorView}
-            onClose={() => setShowEmulatorView(false)}
+            onClose={() => useEmulatorStore.getState().setVisible(false)}
           />
         </main>
         <StatusBar />
