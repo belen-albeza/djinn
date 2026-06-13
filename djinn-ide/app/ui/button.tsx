@@ -49,6 +49,7 @@ export default function Button({
         "disabled:translate-none disabled:shadow-grotesk-ink",
         "font-bold text-base capitalize ",
         variant === "secondary" && "bg-paper text-ink hover:bg-sand-100",
+        "flex items-center flex-direction-row gap-2",
         className,
       )}
       {...props}

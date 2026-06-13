@@ -1,11 +1,9 @@
-import { HammerIcon } from "@phosphor-icons/react";
-
-import Button from "~/ui/button";
 import EditableInput from "~/ui/editable-input";
 import { useProjectStore } from "~/features/base/project.store";
-import { buildProject } from "~/features/base/shortcuts/actions/build-project";
-import MainMenu from "../main-menu";
-import NavBar from "../nav-bar";
+
+import MainMenu from "./main-menu";
+import NavBar from "./nav-bar";
+import ActionsBar from "./actions-bar";
 
 export default function Header() {
   const title = useProjectStore((state) => state.title);
@@ -29,14 +27,7 @@ export default function Header() {
           New Project
         </p>
       )}
-      <Button
-        variant="ghost"
-        iconSize={24}
-        icon={HammerIcon}
-        aria-label="Build project"
-        className="hover:text-burst"
-        onClick={buildProject}
-      />
+      <ActionsBar />
     </header>
   );
 }
