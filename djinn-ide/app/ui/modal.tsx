@@ -14,11 +14,11 @@ type ModalVariant = "neutral" | "destructive" | "error";
 
 const surfaceClasses: Record<ModalVariant, string> = {
   neutral:
-    "bg-[linear-gradient(to_bottom,var(--color-ink)_6px,var(--color-paper)_6px)]",
+    "bg-[linear-gradient(to_bottom,var(--color-ink)_6px,var(--color-sand-100)_6px)]",
   destructive:
-    "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-paper)_6px)]",
+    "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-sand-100)_6px)]",
   error:
-    "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-paper)_6px)]",
+    "bg-[linear-gradient(to_bottom,var(--color-error-700)_6px,var(--color-sand-100)_6px)]",
 };
 
 function LevelIcon({ level }: { level: ModalVariant }) {

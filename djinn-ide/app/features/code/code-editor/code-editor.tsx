@@ -10,8 +10,6 @@ import { useProjectStore } from "~/features/base/project.store";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 import { asm } from "../asm-lang/asm-lezer";
 
-import { buildProject } from "../build-project";
-
 const customShortcuts = keymap.of([
   {
     key: "Mod-s",
@@ -19,14 +17,6 @@ const customShortcuts = keymap.of([
     run: (view) => {
       useProjectStore.getState().setSourceCode(view.state.doc.toString());
       useStatusBarStore.getState().notifySaved();
-      return true;
-    },
-  },
-  {
-    key: "Mod-b",
-    preventDefault: true,
-    run: () => {
-      buildProject();
       return true;
     },
   },

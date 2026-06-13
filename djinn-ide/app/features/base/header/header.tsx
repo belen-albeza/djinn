@@ -3,7 +3,7 @@ import { HammerIcon } from "@phosphor-icons/react";
 import Button from "~/ui/button";
 import EditableInput from "~/ui/editable-input";
 import { useProjectStore } from "~/features/base/project.store";
-import { buildProject } from "~/features/code/build-project";
+import { buildProject } from "~/features/base/shortcuts/actions/build-project";
 import MainMenu from "../main-menu";
 import NavBar from "../nav-bar";
 

@@ -76,6 +76,11 @@
   @apply text-xl font-bold text-ink;
 }
 
+/* misc */
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
 /* animations */
 @theme {
   --animate-saved-flash: saved-flash 1.5s ease-in-out;
