@@ -10,8 +10,11 @@ import {
   useProjectStore,
 } from "~/features/base/project.store";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
+import { getCanBuild } from "./execution.rules";
 
 export function buildProject() {
+  if (!getCanBuild()) return;
+
   let errors: string[] = [];
   let emulator: Emulator | null = null;
 

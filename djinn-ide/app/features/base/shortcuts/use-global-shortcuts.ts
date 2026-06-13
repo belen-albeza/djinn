@@ -6,6 +6,8 @@ export interface Shortcut {
   shift?: boolean;
   alt?: boolean;
   preventDefault?: boolean;
+  /** When provided and it returns false, the shortcut is skipped (key passes through). */
+  enabled?: () => boolean;
   run: () => void;
 }
 
@@ -25,6 +27,7 @@ export function useGlobalShortcuts(shortcuts: Shortcut[]) {
     function handleKeyDown(event: KeyboardEvent) {
       for (const shortcut of shortcuts) {
         if (matches(event, shortcut)) {
+          if (shortcut.enabled && !shortcut.enabled()) continue;
           if (shortcut.preventDefault) event.preventDefault();
           shortcut.run();
           return;
