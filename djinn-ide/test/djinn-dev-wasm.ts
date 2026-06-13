@@ -16,7 +16,9 @@ export async function ensureDjinnDevWasmLoadable() {
   return realDjinnDevWasm;
 }
 
-export type BuildMock = Mock<(title: string) => { title: string }>;
+export type BuildMock = Mock<
+  (args: { title: string; sourceCode: string }) => { title: string }
+>;
 
 export type MockDjinnDevWasmOptions = {
   build?: BuildMock;
@@ -26,7 +28,10 @@ export type MockDjinnDevWasmOptions = {
 export async function mockDjinnDevWasm(options: MockDjinnDevWasmOptions = {}) {
   const real = await ensureDjinnDevWasmLoadable();
   const build =
-    options.build ?? mock((_title: string) => ({ title: "Lorem Ipsum" }));
+    options.build ??
+    mock(({ title }) => ({
+      title,
+    }));
 
   mock.module("djinn-dev-wasm", () => ({
     ...real,

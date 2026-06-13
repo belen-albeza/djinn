@@ -1,12 +1,7 @@
-import { it, expect, describe, mock, afterAll, beforeEach } from "bun:test";
-import {
-  render,
-  waitFor,
-  getByTestId,
-  fireEvent,
-} from "@testing-library/react";
+import { it, expect, describe, afterAll, beforeEach } from "bun:test";
+import { render, waitFor, getByTestId } from "@testing-library/react";
 import { mockAsmLezer, restoreAsmLezer } from "#test/asm-lezer";
-import { mockDjinnDevWasm, restoreDjinnDevWasm } from "#test/djinn-dev-wasm";
+import { restoreDjinnDevWasm } from "#test/djinn-dev-wasm";
 import {
   useProjectStore,
   type ProjectSnapshot,
@@ -31,19 +26,13 @@ describe("CodeEditor", () => {
     useStatusBarStore.getState().reset();
   });
 
-  it("Builds a project", async () => {
-    const build = mock((_title: string) => ({ title: "Lorem" }));
-    await mockDjinnDevWasm({ build });
-
+  it("Renders the source code", async () => {
     useProjectStore.setState(anyProjectWithSourceCode("; Hello, world!"));
     const { container } = render(<CodeEditor />);
 
-    const editor = getByTestId(container, "code-editor-content");
-    fireEvent.keyDown(editor, { key: "b", ctrlKey: true });
-
     await waitFor(() => {
-      expect(build).toHaveBeenCalledWith("Lorem");
+      const editor = getByTestId(container, "code-editor-content");
+      expect(editor.textContent).toContain("; Hello, world!");
     });
-    expect(useStatusBarStore.getState().errors).toEqual([]);
   });
 });

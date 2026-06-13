@@ -7,30 +7,8 @@ import { defaultKeymap } from "@codemirror/commands";
 
 import { codeEditorTheme } from "./code-editor.theme";
 import { useProjectStore } from "~/features/base/project.store";
-import { useStatusBarStore } from "~/features/base/status-bar/status.store";
+import { useEditorStore } from "./editor.store";
 import { asm } from "../asm-lang/asm-lezer";
-
-import { buildProject } from "../build-project";
-
-const customShortcuts = keymap.of([
-  {
-    key: "Mod-s",
-    preventDefault: true,
-    run: (view) => {
-      useProjectStore.getState().setSourceCode(view.state.doc.toString());
-      useStatusBarStore.getState().notifySaved();
-      return true;
-    },
-  },
-  {
-    key: "Mod-b",
-    preventDefault: true,
-    run: () => {
-      buildProject();
-      return true;
-    },
-  },
-]);
 
 export default function CodeEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -44,7 +22,6 @@ export default function CodeEditor() {
         basicSetup,
         codeEditorTheme,
         keymap.of(defaultKeymap),
-        customShortcuts,
         asm(),
         EditorView.contentAttributes.of({
           "data-testid": "code-editor-content",
@@ -56,10 +33,13 @@ export default function CodeEditor() {
       parent: editorRef.current!,
     });
 
+    useEditorStore.getState().setReadCodeFn(() => view.state.doc.toString());
+
     // autofocus the editor on mount
     view.focus();
 
     return () => {
+      useEditorStore.getState().setReadCodeFn(null);
       view.destroy();
     };
   }, [editorRef.current]);
