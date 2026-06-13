@@ -1,3 +1,6 @@
+pub mod devices;
+pub mod vm;
+
 pub struct Cartridge {
     title: String,
 }

@@ -2,6 +2,29 @@ use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
+use djinn_core::devices::DeviceSet;
+use djinn_core::vm::Machine;
+
+#[derive(Serialize, Tsify)]
+#[tsify(into_wasm_abi)]
+pub struct DjinnError {
+    position: (u32, u32),
+    message: String,
+}
+
+impl DjinnError {
+    fn with_message(message: String) -> Self {
+        Self {
+            position: (0, 0),
+            message,
+        }
+    }
+}
+
+#[derive(Serialize, Tsify)]
+#[tsify(into_wasm_abi)]
+pub struct DjinnErrorList(Vec<DjinnError>);
+
 #[derive(Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
 pub struct Project {
@@ -13,19 +36,30 @@ pub struct Project {
 #[wasm_bindgen]
 pub struct Emulator {
     cart: djinnc::Cartridge,
+    vm: Machine<DeviceSet>,
 }
 
 impl Emulator {
     pub fn new(cart: djinnc::Cartridge) -> Self {
-        Self { cart }
+        Self {
+            cart,
+            vm: Machine::new(DeviceSet::default()),
+        }
     }
 }
 
 #[wasm_bindgen]
 impl Emulator {
-    pub fn run(&self) -> Result<(), JsValue> {
-        // TODO: implement spawning VM and running the cartridge
-        Ok(())
+    #[wasm_bindgen]
+    pub fn step(&mut self) -> Result<bool, DjinnError> {
+        // TODO: implement halting logic
+        let shall_halt = true;
+
+        self.vm
+            .step()
+            // TODO: relate error position to the source code
+            .map_err(|e| DjinnError::with_message(e.to_string()))?;
+        Ok(shall_halt)
     }
 }
 
@@ -36,17 +70,6 @@ impl Emulator {
         self.cart.title().to_string()
     }
 }
-
-#[derive(Serialize, Tsify)]
-#[tsify(into_wasm_abi)]
-pub struct DjinnError {
-    position: (u32, u32),
-    message: String,
-}
-
-#[derive(Serialize, Tsify)]
-#[tsify(into_wasm_abi)]
-pub struct DjinnErrorList(Vec<DjinnError>);
 
 #[wasm_bindgen]
 pub fn build(project: Project) -> Result<Emulator, DjinnErrorList> {

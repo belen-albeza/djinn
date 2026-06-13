@@ -1,4 +1,4 @@
-import type { DjinnErrorList } from "djinn-dev-wasm";
+import type { DjinnError } from "djinn-dev-wasm";
 
 import { buildProject } from "./build-project";
 import { useEmulatorStore } from "~/features/runner/emulator.store";
@@ -8,7 +8,7 @@ import { getCanRun } from "./execution.rules";
 export function runProject() {
   if (!getCanRun()) return;
 
-  let errors: string[] = [];
+  let error: string | undefined = undefined;
 
   try {
     const emulator = buildProject();
@@ -17,12 +17,17 @@ export function runProject() {
     useEmulatorStore.getState().setEmulator(emulator);
     useEmulatorStore.getState().setVisible(true);
 
-    emulator.run();
+    // TODO: handle halting logic
+    const shallHalt = emulator.step();
+    if (shallHalt) {
+      console.log("Halted.");
+    }
   } catch (err: unknown) {
-    errors = (err as DjinnErrorList).map(
-      (e) => `Error at Ln ${e.position[0]}, Col ${e.position[1]}: ${e.message}`,
-    );
+    let e = err as DjinnError;
+    error = `Error at Ln ${e.position[0]}, Col ${e.position[1]}: ${e.message}`;
   }
 
-  useStatusBarStore.getState().setErrors(errors);
+  if (error) {
+    useStatusBarStore.getState().setErrors([error]);
+  }
 }
