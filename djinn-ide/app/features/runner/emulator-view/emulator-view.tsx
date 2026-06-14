@@ -46,7 +46,9 @@ export default function EmulatorView({
       } else {
         useStatusBarStore
           .getState()
-          .setMessage("Emulator halted successfully.");
+          .setMessages([
+            { type: "success", message: "Emulator halted successfully." },
+          ]);
       }
     };
 

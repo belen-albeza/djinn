@@ -5,6 +5,8 @@ import {
   type DjinnErrorList,
 } from "djinn-dev-wasm";
 
+import type { Message } from "~/features/base/status-bar/status.store";
+
 import {
   toProjectSnapshot,
   useProjectStore,
@@ -26,6 +28,11 @@ export function buildProject() {
     );
   }
 
-  useStatusBarStore.getState().setErrors(errors);
+  let messages: Message[] =
+    errors.length > 0
+      ? errors.map((e) => ({ type: "error", message: e }))
+      : [{ type: "success", message: "Built without errors." }];
+
+  useStatusBarStore.getState().setMessages(messages);
   return emulator;
 }
