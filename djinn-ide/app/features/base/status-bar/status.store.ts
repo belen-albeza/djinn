@@ -1,28 +1,29 @@
 import { create } from "zustand";
 
+export interface Message {
+  type: "error" | "success";
+  message: string;
+}
+
 type StatusBarSnapshot = {
   savedTick: number;
-  errors: string[];
-  message: string;
+  messages: Message[];
 };
 
 interface StatusBarStore extends StatusBarSnapshot {
   notifySaved: () => void;
-  setErrors: (errors: string[]) => void;
-  setMessage: (message: string) => void;
+  setMessages: (messages: Message[]) => void;
   reset: () => void;
 }
 
 const defaultStatusBar: StatusBarSnapshot = {
   savedTick: 0,
-  errors: [],
-  message: "",
+  messages: [],
 };
 
 export const useStatusBarStore = create<StatusBarStore>((set) => ({
   ...defaultStatusBar,
   notifySaved: () => set((state) => ({ savedTick: state.savedTick + 1 })),
-  setErrors: (errors: string[]) => set({ errors }),
-  setMessage: (message: string) => set({ message }),
+  setMessages: (messages: Message[]) => set({ messages }),
   reset: () => set(defaultStatusBar),
 }));
