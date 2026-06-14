@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 
+use djinn_core::cart::Rom;
 use djinn_core::devices::{DeviceSet, VIDEO_HEIGHT, VIDEO_WIDTH};
 use djinn_core::vm::{Devices, Machine};
 
@@ -31,15 +32,15 @@ const THEME: [(u8, u8, u8); 16] = [
 
 #[wasm_bindgen]
 pub struct Emulator {
-    cart: djinnc::Cartridge,
-    vm: Machine<DeviceSet>,
+    title: String,
+    vm: Machine<DeviceSet, Rom>,
 }
 
 impl Emulator {
     pub fn new(cart: djinnc::Cartridge) -> Self {
         Self {
-            cart,
-            vm: Machine::new(DeviceSet::default()),
+            title: cart.title().to_string(),
+            vm: Machine::new(DeviceSet::default(), cart.rom().clone()),
         }
     }
 
@@ -61,12 +62,10 @@ impl Emulator {
 #[wasm_bindgen]
 impl Emulator {
     #[wasm_bindgen]
-    pub fn step(&mut self) -> Result<bool, DjinnError> {
-        // TODO: implement halting logic
-        let shall_halt = true;
-
-        self.vm
-            .step()
+    pub fn tick(&mut self) -> Result<bool, DjinnError> {
+        let shall_halt = self
+            .vm
+            .tick()
             // TODO: relate error position to the source code
             .map_err(|e| DjinnError::with_message(e.to_string()))?;
         self.update_display_buffer();
@@ -92,6 +91,6 @@ impl Emulator {
 impl Emulator {
     #[wasm_bindgen(getter)]
     pub fn title(&self) -> String {
-        self.cart.title().to_string()
+        self.title.to_owned()
     }
 }

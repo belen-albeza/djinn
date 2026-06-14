@@ -1,0 +1,66 @@
+use super::Result;
+use super::cpu::Cpu;
+use crate::asm::{Opcode, ProcessId, ProcessType};
+
+use std::fmt;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Status {
+    // TODO: waiting state?
+    Running,
+    Terminated,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Running => write!(f, "running"),
+            Status::Terminated => write!(f, "terminated"),
+        }
+    }
+}
+
+pub struct Process {
+    id: ProcessId,
+    process_type: ProcessType,
+    status: Status,
+    cpu: Cpu,
+}
+
+impl Process {
+    pub fn new(id: ProcessId, process_type: ProcessType) -> Self {
+        Self {
+            cpu: Cpu::new(),
+            process_type,
+            status: Status::Running,
+            id,
+        }
+    }
+
+    /// Runs process until it yields or terminates.
+    pub fn tick(&mut self, instructions: &[Opcode]) -> Result<()> {
+        while let Some(opcode) = self.cpu.read_opcode(instructions) {
+            let yielded = self.cpu.exec_opcode(opcode)?;
+            if yielded {
+                return Ok(());
+            }
+        }
+
+        self.status = Status::Terminated;
+        Ok(())
+    }
+
+    pub fn status(&self) -> Status {
+        self.status
+    }
+}
+
+impl fmt::Display for Process {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Process #{} ({}): {}",
+            self.id.0, self.process_type.0, self.status
+        )
+    }
+}

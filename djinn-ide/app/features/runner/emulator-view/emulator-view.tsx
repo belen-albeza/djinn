@@ -3,6 +3,7 @@ import { Emulator } from "djinn-dev-wasm";
 
 import { Modal } from "~/ui/modal";
 import { cn } from "~/utils/cn";
+import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 import { useEmulatorStore } from "../emulator.store";
 
 // FIXME: maybe get these from somewhere else
@@ -27,7 +28,8 @@ export default function EmulatorView({
     let animationFrameId: number;
 
     const frame = () => {
-      const shallHalt = emulator.step();
+      console.log(animationFrameId);
+      const shallHalt = emulator.tick();
 
       const sharedBuffer = new Uint8Array(
         Emulator.memory.buffer,
@@ -41,6 +43,10 @@ export default function EmulatorView({
 
       if (!shallHalt) {
         animationFrameId = requestAnimationFrame(frame);
+      } else {
+        useStatusBarStore
+          .getState()
+          .setMessage("Emulator halted successfully.");
       }
     };
 
