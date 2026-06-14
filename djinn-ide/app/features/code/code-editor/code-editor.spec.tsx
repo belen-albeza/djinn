@@ -1,5 +1,5 @@
 import { it, expect, describe, afterAll, beforeEach } from "bun:test";
-import { render, waitFor, getByTestId } from "@testing-library/react";
+import { render, getByTestId } from "@testing-library/react";
 import { mockAsmLezer, restoreAsmLezer } from "#test/asm-lezer";
 import { restoreDjinnDevWasm } from "#test/djinn-dev-wasm";
 import {
@@ -30,9 +30,7 @@ describe("CodeEditor", () => {
     useProjectStore.setState(anyProjectWithSourceCode("; Hello, world!"));
     const { container } = render(<CodeEditor />);
 
-    await waitFor(() => {
-      const editor = getByTestId(container, "code-editor-content");
-      expect(editor.textContent).toContain("; Hello, world!");
-    });
+    const editor = getByTestId(container, "code-editor-content");
+    expect(editor.textContent).toContain("; Hello, world!");
   });
 });

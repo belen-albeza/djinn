@@ -6,6 +6,9 @@ import wasm from "vite-plugin-wasm";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), wasm(), lezer()],
+  optimizeDeps: {
+    exclude: ["djinn-dev-wasm"],
+  },
   resolve: {
     tsconfigPaths: true,
   },

@@ -54,4 +54,25 @@ export const codeEditorTheme = EditorView.theme({
   ".cm-scroller::-webkit-scrollbar-thumb:hover": {
     background: "var(--color-sand-400)",
   },
+  // Error markers
+  ".cm-errorLine": {
+    backgroundColor: "var(--color-error-bg, rgba(220, 38, 38, 0.12))",
+  },
+  ".cm-errorGutter": {
+    paddingLeft: "calc(var(--spacing) * 2)",
+  },
+  ".cm-lineNumbers .cm-gutterElement": {
+    paddingLeft: 0,
+  },
+  ".cm-errorGutter .cm-gutterElement": {
+    display: "flex",
+    alignItems: "center",
+    paddingRight: 0,
+  },
+  ".cm-errorGutterMarker": {
+    color: "var(--color-error, #dc2626)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
