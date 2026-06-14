@@ -24,7 +24,8 @@ export function buildProject() {
     emulator = build(toProjectSnapshot(useProjectStore.getState()) as Project);
   } catch (err: unknown) {
     errors = (err as DjinnErrorList).map(
-      (e) => `Error at Ln ${e.position[0]}, Col ${e.position[1]}: ${e.message}`,
+      (e) =>
+        `Error at Ln ${e.position.line}, Col ${e.position.column}: ${e.message}`,
     );
   }
 

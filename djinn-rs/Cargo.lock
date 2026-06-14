@@ -44,8 +44,8 @@ dependencies = [
 name = "djinnc"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "djinn-core",
+ "thiserror",
 ]
 
 [[package]]
