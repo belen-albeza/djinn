@@ -5,10 +5,11 @@ import { EditorView, keymap } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
 import { defaultKeymap } from "@codemirror/commands";
 
-import { codeEditorTheme } from "./code-editor.theme";
 import { useProjectStore } from "~/features/base/project.store";
-import { useEditorStore } from "./editor.store";
 import { asm } from "../asm-lang/asm-lezer";
+import { codeEditorTheme } from "./code-editor.theme";
+import { useEditorStore } from "./editor.store";
+import { errorMarkers, setErrors } from "./error-markers";
 
 const overridenShortcuts = Prec.highest(
   keymap.of([
@@ -25,6 +26,7 @@ const overridenShortcuts = Prec.highest(
 
 export default function CodeEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null); // this is codemirror's View
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -36,7 +38,11 @@ export default function CodeEditor() {
         codeEditorTheme,
         overridenShortcuts,
         keymap.of(defaultKeymap),
+        errorMarkers,
         asm(),
+        EditorView.editorAttributes.of({
+          "data-testid": "code-editor",
+        }),
         EditorView.contentAttributes.of({
           "data-testid": "code-editor-content",
         }),
@@ -46,6 +52,7 @@ export default function CodeEditor() {
       state: startState,
       parent: editorRef.current!,
     });
+    viewRef.current = view;
 
     useEditorStore.getState().setReadCodeFn(() => view.state.doc.toString());
 
@@ -54,9 +61,17 @@ export default function CodeEditor() {
 
     return () => {
       useEditorStore.getState().setReadCodeFn(null);
+      viewRef.current = null;
       view.destroy();
     };
   }, [editorRef.current]);
+
+  const codeErrors = useEditorStore((state) => state.errors);
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: setErrors.of(codeErrors),
+    });
+  }, [codeErrors]);
 
   return (
     <section

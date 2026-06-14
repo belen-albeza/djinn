@@ -40,7 +40,10 @@ type Result<T> = std::result::Result<T, AssemblerError>;
 pub fn compile(_source_code: &str) -> Result<Rom> {
     // Ok(Rom::new(vec![Opcode::NoOp, Opcode::Yield, Opcode::NoOp]))
     Err(AssemblerError::LexerError {
-        position: Location { line: 1, column: 1 },
+        position: Location {
+            line: 20,
+            column: 1,
+        },
         message: "Unexpected character `*`".to_string(),
     })
 }
