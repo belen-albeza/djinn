@@ -53,6 +53,8 @@ describe("Global shortcuts", () => {
         sourceCode: "; Hello, world!",
       });
     });
-    expect(useStatusBarStore.getState().errors).toEqual([]);
+    expect(useStatusBarStore.getState().messages).toEqual([
+      { type: "success", message: "Built without errors." },
+    ]);
   });
 });
