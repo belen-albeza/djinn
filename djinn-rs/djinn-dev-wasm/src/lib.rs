@@ -1,6 +1,11 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
+
+mod emulator;
+mod error;
+use emulator::Emulator;
+use error::DjinnErrorList;
 
 #[derive(Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
@@ -9,44 +14,6 @@ pub struct Project {
     #[serde(rename = "sourceCode")]
     source_code: String,
 }
-
-#[wasm_bindgen]
-pub struct Emulator {
-    cart: djinnc::Cartridge,
-}
-
-impl Emulator {
-    pub fn new(cart: djinnc::Cartridge) -> Self {
-        Self { cart }
-    }
-}
-
-#[wasm_bindgen]
-impl Emulator {
-    pub fn run(&self) -> Result<(), JsValue> {
-        // TODO: implement spawning VM and running the cartridge
-        Ok(())
-    }
-}
-
-#[wasm_bindgen]
-impl Emulator {
-    #[wasm_bindgen(getter)]
-    pub fn title(&self) -> String {
-        self.cart.title().to_string()
-    }
-}
-
-#[derive(Serialize, Tsify)]
-#[tsify(into_wasm_abi)]
-pub struct DjinnError {
-    position: (u32, u32),
-    message: String,
-}
-
-#[derive(Serialize, Tsify)]
-#[tsify(into_wasm_abi)]
-pub struct DjinnErrorList(Vec<DjinnError>);
 
 #[wasm_bindgen]
 pub fn build(project: Project) -> Result<Emulator, DjinnErrorList> {
