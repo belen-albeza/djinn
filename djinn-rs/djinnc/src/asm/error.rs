@@ -1,31 +1,26 @@
-use super::Location;
-use super::lexer::LexerError;
+use crate::asm::Location;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum AssemblerError {
-    #[error(transparent)]
-    Lexer(LexerError),
-    #[error("Parser error at {0}: {1}")]
-    Parser(Location, String),
+    #[error("Unexpected character at {0}: {1}")]
+    UnexpectedCharacter(Location, char),
+    #[error("Unexpected token at {0}: {1}")]
+    UnexpectedToken(Location, String),
 }
 
 impl AssemblerError {
     pub fn location(&self) -> Location {
         match self {
-            AssemblerError::Lexer(err) => err.location(),
-            AssemblerError::Parser(position, _) => *position,
+            AssemblerError::UnexpectedCharacter(loc, _) => *loc,
+            AssemblerError::UnexpectedToken(loc, _) => *loc,
         }
     }
     pub fn message(&self) -> String {
         match self {
-            AssemblerError::Lexer(err) => err.message(),
-            AssemblerError::Parser(_, message) => message.to_string(),
+            AssemblerError::UnexpectedCharacter(_, c) => format!("Unexpected character `{}`", c),
+            AssemblerError::UnexpectedToken(_, token) => format!("Unexpected token `{}`", token),
         }
     }
 }
 
-impl From<LexerError> for AssemblerError {
-    fn from(err: LexerError) -> Self {
-        Self::Lexer(err)
-    }
-}
+pub type Result<T> = std::result::Result<T, AssemblerError>;
