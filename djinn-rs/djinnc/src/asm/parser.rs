@@ -126,3 +126,27 @@ impl Parser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_process_declaration() {
+        let mut lexer = Lexer::new("~main:\nnoop");
+        let mut parser = Parser::new();
+        let process = parser.parse_process(&mut lexer).unwrap();
+        assert_eq!(
+            process,
+            Some(ProcessNode {
+                instructions: vec![StatementNode::new(
+                    Opcode::NoOp,
+                    Location { line: 2, column: 1 }
+                )],
+                process_type: ProcessType(1),
+                name: "main".to_string(),
+                location: Location { line: 1, column: 1 },
+            })
+        );
+    }
+}

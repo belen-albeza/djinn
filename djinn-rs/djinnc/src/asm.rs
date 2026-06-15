@@ -40,3 +40,20 @@ pub fn compile(source_code: &str) -> Result<Rom> {
         Err(AssemblerError::NoMainProcessFound(lexer.current_location()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_returns_no_main_process_error() {
+        let res = compile("");
+        assert_eq!(
+            res,
+            Err(AssemblerError::NoMainProcessFound(Location {
+                line: 1,
+                column: 1
+            }))
+        );
+    }
+}
