@@ -58,7 +58,7 @@ impl<'a> Lexer<'a> {
                     self.current_location.column = 0;
                     self.advance();
                 }
-                // TODO: skip comments
+                ';' => self.skip_comment(),
                 _ => break,
             }
         }
@@ -71,6 +71,16 @@ impl<'a> Lexer<'a> {
             self.current_location.column += 1;
         }
         res
+    }
+
+    fn skip_comment(&mut self) {
+        while let Some(x) = self.source.peek() {
+            if *x == '\n' {
+                break;
+            } else {
+                self.advance();
+            }
+        }
     }
 
     fn scan_identifier_or_opcode(&mut self) -> Result<TokenKind> {
@@ -127,6 +137,25 @@ mod tests {
         assert_eq!(
             lexer.scan_token().unwrap().location,
             Location { line: 2, column: 5 }
+        );
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
+    }
+
+    #[test]
+    fn test_skip_comment() {
+        let input = r"; some
+;comment with a fake opcode yld
+yld ;actual opcode
+; comment before EOF";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(
+            lexer.scan_token().unwrap(),
+            Token {
+                kind: TokenKind::Yield,
+                lexeme: "yld".to_string(),
+                location: Location { line: 3, column: 1 }
+            }
         );
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
     }
