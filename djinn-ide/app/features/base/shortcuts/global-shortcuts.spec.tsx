@@ -42,7 +42,8 @@ describe("Global shortcuts", () => {
     const build = mock();
     await mockDjinnDevWasm({ build });
 
-    useProjectStore.setState({ title: "Lorem", sourceCode: "; Hello, world!" });
+    useProjectStore.setState({ title: "Lorem", sourceCode: "" });
+    useEditorStore.getState().setReadCodeFn(() => "; Hello, world!");
     render(<Harness />);
 
     fireEvent.keyDown(window, { key: "b", ctrlKey: true });

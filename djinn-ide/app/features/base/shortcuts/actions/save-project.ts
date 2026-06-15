@@ -6,7 +6,7 @@ import { getCanSave } from "./execution.rules";
 export function saveProject() {
   if (!getCanSave()) return;
 
-  const readCode = useEditorStore.getState().readCode;
+  const readCode = useEditorStore.getState().readCodeFn;
   if (!readCode) return;
 
   useProjectStore.getState().setSourceCode(readCode());

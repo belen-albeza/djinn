@@ -3,6 +3,7 @@
 import { Opcode, Bool } from "./asm.grammar.terms";
 
 const OPCODES = new Set([
+  "noop",
   "push",
   "pop",
   "dup",

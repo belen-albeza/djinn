@@ -21,6 +21,14 @@ export function buildProject() {
   let errors: DjinnErrorList = [];
   let emulator: Emulator | null = null;
 
+  const code = useEditorStore.getState().readCodeFn?.();
+  if (!code) {
+    console.error("readCodeFn is not set");
+    return;
+  }
+
+  useProjectStore.getState().setSourceCode(code);
+
   try {
     emulator = build(toProjectSnapshot(useProjectStore.getState()) as Project);
   } catch (err: unknown) {
