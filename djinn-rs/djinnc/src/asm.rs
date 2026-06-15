@@ -1,8 +1,14 @@
 use std::fmt;
 
-use djinn_core::cart::Rom;
-
+mod error;
+mod lexer;
 mod token;
+
+use djinn_core::asm::Opcode;
+use djinn_core::cart::Rom;
+pub use error::AssemblerError;
+use lexer::Lexer;
+use token::TokenKind;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
@@ -16,34 +22,37 @@ impl fmt::Display for Location {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum AssemblerError {
-    #[error("Lexer error at {position}: {message}")]
-    LexerError { position: Location, message: String },
-}
+pub type Result<T> = std::result::Result<T, AssemblerError>;
 
-impl AssemblerError {
-    pub fn location(&self) -> Location {
-        match self {
-            AssemblerError::LexerError { position, .. } => *position,
+pub fn compile(source_code: &str) -> Result<Rom> {
+    let mut lexer = Lexer::new(source_code);
+    let mut tokens = Vec::new();
+
+    // TODO: do this in a parser
+    loop {
+        let token = lexer.scan_token()?;
+        let eof = token.kind == TokenKind::Eof;
+        tokens.push(token);
+        if eof {
+            break;
         }
     }
-    pub fn message(&self) -> String {
-        match self {
-            AssemblerError::LexerError { message, .. } => message.to_string(),
-        }
-    }
-}
 
-type Result<T> = std::result::Result<T, AssemblerError>;
+    let instructions: Vec<Opcode> = tokens
+        .into_iter()
+        .map(|token| match token.kind {
+            TokenKind::NoOp => Ok(Some(Opcode::NoOp)),
+            TokenKind::Yield => Ok(Some(Opcode::Yield)),
+            TokenKind::Eof => Ok(None),
+            _ => Err(AssemblerError::Parser(
+                token.location,
+                format!("Unexpected token `{}`", token.lexeme),
+            )),
+        })
+        .collect::<std::result::Result<Vec<_>, _>>()?
+        .into_iter()
+        .flatten()
+        .collect();
 
-pub fn compile(_source_code: &str) -> Result<Rom> {
-    // Ok(Rom::new(vec![Opcode::NoOp, Opcode::Yield, Opcode::NoOp]))
-    Err(AssemblerError::LexerError {
-        position: Location {
-            line: 20,
-            column: 1,
-        },
-        message: "Unexpected character `*`".to_string(),
-    })
+    Ok(Rom::new(instructions))
 }
