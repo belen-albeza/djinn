@@ -4,6 +4,9 @@ use crate::asm::Location;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
+    // 1-char tokens
+    Colon,
+    Tilde,
     // Multi-char tokens
     Id,
     // Opcodes
