@@ -5,24 +5,7 @@ use std::str::Chars;
 use crate::asm::Location;
 use crate::asm::token::{Token, TokenKind};
 
-#[derive(Debug, thiserror::Error, PartialEq)]
-pub enum LexerError {
-    #[error("Unexpected character at {0}: {1}")]
-    UnexpectedCharacter(Location, char),
-}
-
-impl LexerError {
-    pub fn location(&self) -> Location {
-        match self {
-            LexerError::UnexpectedCharacter(loc, _) => *loc,
-        }
-    }
-    pub fn message(&self) -> String {
-        format!("{}", self)
-    }
-}
-
-type Result<T> = std::result::Result<T, LexerError>;
+use crate::asm::{AssemblerError, Result};
 
 #[derive(Debug, Clone)]
 pub struct Lexer<'a> {
@@ -55,7 +38,7 @@ impl<'a> Lexer<'a> {
                 // multi-char tokens
                 _ if x.is_alphabetic() => self.scan_identifier_or_opcode()?,
                 _ => {
-                    return Err(LexerError::UnexpectedCharacter(self.start_location, x));
+                    return Err(AssemblerError::UnexpectedCharacter(self.start_location, x));
                 }
             };
             Ok(build_token(kind, &self.buffer, self.start_location))
@@ -162,7 +145,7 @@ mod tests {
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Id); // lorem
         assert_eq!(
             lexer.scan_token().unwrap_err(),
-            LexerError::UnexpectedCharacter(Location { line: 1, column: 6 }, '*')
+            AssemblerError::UnexpectedCharacter(Location { line: 1, column: 6 }, '*')
         );
     }
 }

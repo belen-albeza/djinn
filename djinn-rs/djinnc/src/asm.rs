@@ -10,6 +10,8 @@ pub use error::AssemblerError;
 use lexer::Lexer;
 use token::TokenKind;
 
+use error::Result;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
     pub line: usize,
@@ -21,8 +23,6 @@ impl fmt::Display for Location {
         write!(f, "Ln {}, Col {}", self.line, self.column)
     }
 }
-
-pub type Result<T> = std::result::Result<T, AssemblerError>;
 
 pub fn compile(source_code: &str) -> Result<Rom> {
     let mut lexer = Lexer::new(source_code);
@@ -44,9 +44,9 @@ pub fn compile(source_code: &str) -> Result<Rom> {
             TokenKind::NoOp => Ok(Some(Opcode::NoOp)),
             TokenKind::Yield => Ok(Some(Opcode::Yield)),
             TokenKind::Eof => Ok(None),
-            _ => Err(AssemblerError::Parser(
+            _ => Err(AssemblerError::UnexpectedToken(
                 token.location,
-                format!("Unexpected token `{}`", token.lexeme),
+                token.lexeme,
             )),
         })
         .collect::<std::result::Result<Vec<_>, _>>()?
