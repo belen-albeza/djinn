@@ -6,6 +6,8 @@ pub enum AssemblerError {
     UnexpectedCharacter(Location, char),
     #[error("Unexpected token at {0}: {1}")]
     UnexpectedToken(Location, String),
+    #[error("No main process found")]
+    NoMainProcessFound(Location),
 }
 
 impl AssemblerError {
@@ -13,13 +15,12 @@ impl AssemblerError {
         match self {
             AssemblerError::UnexpectedCharacter(loc, _) => *loc,
             AssemblerError::UnexpectedToken(loc, _) => *loc,
+            AssemblerError::NoMainProcessFound(loc) => *loc,
         }
     }
+
     pub fn message(&self) -> String {
-        match self {
-            AssemblerError::UnexpectedCharacter(_, c) => format!("Unexpected character `{}`", c),
-            AssemblerError::UnexpectedToken(_, token) => format!("Unexpected token `{}`", token),
-        }
+        format!("{}", self)
     }
 }
 

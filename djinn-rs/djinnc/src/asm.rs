@@ -5,13 +5,13 @@ mod lexer;
 mod parser;
 mod token;
 
-use djinn_core::asm::Opcode;
+use djinn_core::asm::{Opcode, ProcessType};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;
 use parser::Parser;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Location {
     pub line: usize,
     pub column: usize,
@@ -28,7 +28,15 @@ pub fn compile(source_code: &str) -> Result<Rom> {
     let mut parser = Parser::new();
 
     // TODO: parse all processes instead
-    let instructions = parser.parse_process(&mut lexer)?;
-
-    Ok(Rom::new(instructions))
+    if let Some(main_process) = parser.parse_process(&mut lexer)? {
+        Ok(Rom::new(
+            main_process
+                .instructions
+                .into_iter()
+                .map(|statement| statement.raw_opcode)
+                .collect(),
+        ))
+    } else {
+        Err(AssemblerError::NoMainProcessFound(lexer.current_location()))
+    }
 }
