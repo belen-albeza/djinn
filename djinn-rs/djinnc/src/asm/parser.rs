@@ -3,6 +3,9 @@ use crate::asm::lexer::Lexer;
 use crate::asm::token::{Token, TokenKind};
 use crate::asm::{AssemblerError, Location, Number, Opcode, ProcessType, Result, Value};
 
+mod alias;
+use alias::Alias;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct StatementNode {
     pub raw_opcode: Opcode,
@@ -89,7 +92,13 @@ impl Parser {
         Ok(None)
     }
 
-    fn consume_value(&mut self, lexer: &mut Lexer) -> Result<Value> {
+    fn consume_value_or_alias(&mut self, lexer: &mut Lexer) -> Result<Value> {
+        let peeked = lexer.peek_token()?;
+        if peeked.kind == TokenKind::Colon {
+            let alias = self.consume_alias(lexer)?;
+            return Ok(Value::Numeric(Number::Int(alias as i32)));
+        }
+
         let token = lexer.scan_token()?;
         let value = match token.kind {
             TokenKind::Int(value) => Value::Numeric(Number::Int(value)),
@@ -108,6 +117,14 @@ impl Parser {
             }
         };
         Ok(value)
+    }
+
+    fn consume_alias(&mut self, lexer: &mut Lexer) -> Result<u8> {
+        self.consume(lexer, &[TokenKind::Colon])?;
+        let id = self.consume(lexer, &[TokenKind::Id])?;
+        let alias = Alias::try_from(id.lexeme).map_err(|e| e.with_location(id.location))?;
+
+        Ok(alias.0)
     }
 
     fn parse_process_declaration(
@@ -181,7 +198,7 @@ impl Parser {
         lexer: &mut Lexer,
         location: Location,
     ) -> Result<Option<StatementNode>> {
-        let value = self.consume_value(lexer)?;
+        let value = self.consume_value_or_alias(lexer)?;
         Ok(Some(StatementNode::new(Opcode::Push(value), location)))
     }
 }
@@ -239,5 +256,14 @@ mod tests {
                 Location { line: 1, column: 1 }
             ))
         );
+    }
+
+    #[test]
+    fn test_parse_alias() {
+        let mut lexer = Lexer::new(":console");
+        let mut parser = Parser::new();
+
+        let alias = parser.consume_alias(&mut lexer).unwrap();
+        assert_eq!(alias, 0x00);
     }
 }

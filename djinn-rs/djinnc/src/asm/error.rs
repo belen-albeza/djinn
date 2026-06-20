@@ -29,6 +29,8 @@ pub enum AssemblerError {
     MainProcessNotFound(Location),
     #[error("Process already defined: {1}.")]
     ProcessAlreadyDefined(Location, String),
+    #[error("Unknown alias: {1}.")]
+    UnknownAlias(Location, String),
 }
 
 impl AssemblerError {
@@ -38,11 +40,32 @@ impl AssemblerError {
             AssemblerError::UnexpectedToken { location, .. } => *location,
             AssemblerError::MainProcessNotFound(loc) => *loc,
             AssemblerError::ProcessAlreadyDefined(loc, _) => *loc,
+            AssemblerError::UnknownAlias(loc, _) => *loc,
         }
     }
 
     pub fn message(&self) -> String {
         format!("{}", self)
+    }
+
+    pub fn with_location(self, location: Location) -> Self {
+        match self {
+            AssemblerError::UnexpectedCharacter(_, c) => {
+                AssemblerError::UnexpectedCharacter(location, c)
+            }
+            AssemblerError::UnexpectedToken {
+                token, expected, ..
+            } => AssemblerError::UnexpectedToken {
+                location,
+                token,
+                expected,
+            },
+            AssemblerError::MainProcessNotFound(_) => AssemblerError::MainProcessNotFound(location),
+            AssemblerError::ProcessAlreadyDefined(_, name) => {
+                AssemblerError::ProcessAlreadyDefined(location, name)
+            }
+            AssemblerError::UnknownAlias(_, alias) => AssemblerError::UnknownAlias(location, alias),
+        }
     }
 }
 
