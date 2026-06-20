@@ -1,9 +1,11 @@
-use crate::asm::Value;
+use crate::{asm::Value, devices::DeviceType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Opcode {
     #[default]
     NoOp,
+    // Device
+    Device(DeviceType, u8),
     // Process control
     Yield,
     // Stack

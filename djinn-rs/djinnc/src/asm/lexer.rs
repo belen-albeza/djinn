@@ -150,6 +150,8 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         // process control
         "noop" => Some(TokenKind::NoOp),
         "yld" => Some(TokenKind::Yield),
+        // device
+        "dev" => Some(TokenKind::Dev),
         // stack
         "push" => Some(TokenKind::Push),
         "pop" => Some(TokenKind::Pop),
@@ -260,6 +262,7 @@ yld ;actual opcode
             ("leq", TokenKind::Leq),
             ("gt", TokenKind::Gt),
             ("geq", TokenKind::Geq),
+            ("dev", TokenKind::Dev),
         ];
 
         for (lexeme, kind) in opcodes {

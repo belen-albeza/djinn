@@ -1,4 +1,5 @@
 use crate::asm::{Instruction, Location, Opcode, Value};
+use crate::vm::{Devices, Stacked};
 use crate::vm::{Result, RuntimeError};
 
 mod stack;
@@ -21,12 +22,17 @@ impl Cpu {
     }
 
     /// Executes an opcode and returns whether the process has yielded.
-    pub fn exec_opcode(&mut self, instruction: Instruction) -> Result<bool> {
+    pub fn exec_opcode(
+        &mut self,
+        devices: &mut impl Devices,
+        instruction: Instruction,
+    ) -> Result<bool> {
         let Instruction { opcode, location } = instruction;
         self.current_location = location;
 
         match opcode {
             Opcode::NoOp => Ok(false),
+            Opcode::Device(device_type, api_op) => devices.call_api(device_type, api_op, self),
             Opcode::Yield => Ok(true),
             Opcode::Push(value) => {
                 self.stack.push(value);
@@ -68,6 +74,12 @@ impl Cpu {
         self.pc += 1;
         Some(*instruction)
     }
+}
+
+impl Stacked for Cpu {
+    fn push_stack(&mut self, value: Value) {
+        self.stack.push(value);
+    }
 
     fn pop_stack(&mut self) -> Result<Value> {
         let value = self
@@ -88,9 +100,19 @@ impl Default for Cpu {
 mod tests {
     use super::*;
     use crate::asm::{Location, Number, Value};
+    use crate::devices::{ConsoleApi, DeviceType};
+    use crate::vm::MockDevices;
 
     fn any_cpu() -> Cpu {
         Cpu::default()
+    }
+
+    fn any_devices() -> impl Devices {
+        let mut devices = MockDevices::new();
+        devices.expect_call_api().returning(|_, _, _| Ok(false));
+        devices.expect_video_buffer().return_const(Vec::<u8>::new());
+        devices.expect_stdout().returning(String::new);
+        devices
     }
 
     fn opcode(opcode: Opcode) -> Instruction {
@@ -100,20 +122,29 @@ mod tests {
     #[test]
     fn test_yield_opcode() {
         let mut cpu = any_cpu();
-        assert_eq!(cpu.exec_opcode(opcode(Opcode::Yield)), Ok(true));
+        assert_eq!(
+            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Yield)),
+            Ok(true)
+        );
     }
 
     #[test]
     fn test_noop_opcode() {
         let mut cpu = any_cpu();
-        assert_eq!(cpu.exec_opcode(opcode(Opcode::NoOp)), Ok(false));
+        assert_eq!(
+            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::NoOp)),
+            Ok(false)
+        );
     }
 
     #[test]
     fn test_push_opcode() {
         let mut cpu = any_cpu();
         assert_eq!(
-            cpu.exec_opcode(opcode(Opcode::Push(Value::Numeric(Number::Int(1))))),
+            cpu.exec_opcode(
+                &mut any_devices(),
+                opcode(Opcode::Push(Value::Numeric(Number::Int(1))))
+            ),
             Ok(false)
         );
         assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
@@ -124,7 +155,10 @@ mod tests {
         let mut cpu = any_cpu();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
-        assert_eq!(cpu.exec_opcode(opcode(Opcode::Pop)), Ok(false));
+        assert_eq!(
+            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Pop)),
+            Ok(false)
+        );
         assert!(cpu.stack.is_empty());
     }
 
@@ -133,8 +167,29 @@ mod tests {
         let mut cpu = any_cpu();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
-        assert_eq!(cpu.exec_opcode(opcode(Opcode::Dup)), Ok(false));
+        assert_eq!(
+            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Dup)),
+            Ok(false)
+        );
         assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
         assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
+    }
+
+    #[test]
+    fn test_device_opcode() {
+        let mut cpu = any_cpu();
+        let mut devices = MockDevices::new();
+        devices
+            .expect_call_api()
+            .withf(|device_type, api_op, _| {
+                *device_type == DeviceType::Console && *api_op == ConsoleApi::Log as u8
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(false));
+        let res = cpu.exec_opcode(
+            &mut devices,
+            opcode(Opcode::Device(DeviceType::Console, ConsoleApi::Log as u8)),
+        );
+        assert_eq!(res, Ok(false));
     }
 }

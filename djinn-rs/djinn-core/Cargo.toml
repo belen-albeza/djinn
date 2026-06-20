@@ -8,3 +8,6 @@ crate-type = ["rlib"]
 
 [dependencies]
 thiserror = "2.0.18"
+
+[dev-dependencies]
+mockall = "0.14.0"

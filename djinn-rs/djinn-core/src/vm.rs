@@ -1,7 +1,8 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, Location, ProcessId, ProcessType};
+use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
+use crate::devices::DeviceType;
 use process::{Process, Status};
 
 #[derive(Debug, thiserror::Error, PartialEq)]
@@ -38,8 +39,23 @@ impl RuntimeError {
 
 pub type Result<T> = std::result::Result<T, RuntimeError>;
 
+#[cfg_attr(test, mockall::automock)]
 pub trait Devices {
+    #[cfg_attr(test, mockall::concretize)]
+    fn call_api<S: Stacked>(
+        &mut self,
+        device_type: DeviceType,
+        api_op: u8,
+        cpu: &mut S,
+    ) -> Result<bool>;
     fn video_buffer(&self) -> &[u8];
+    fn stdout(&self) -> String;
+}
+
+#[cfg_attr(test, mockall::automock)]
+pub trait Stacked {
+    fn push_stack(&mut self, value: Value);
+    fn pop_stack(&mut self) -> Result<Value>;
 }
 
 pub trait InstructionProvider {
@@ -63,7 +79,8 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     }
 
     pub fn tick(&mut self) -> Result<bool> {
-        self.main_process.tick(self.rom.instructions())?;
+        self.main_process
+            .tick(&mut self.devices, self.rom.instructions())?;
         let shall_halt = self.main_process.status() == Status::Terminated;
 
         Ok(shall_halt)

@@ -2,6 +2,7 @@ use crate::asm::analyzer::Analyzer;
 use crate::asm::lexer::Lexer;
 use crate::asm::token::{Token, TokenKind};
 use crate::asm::{AssemblerError, Location, Number, Opcode, ProcessType, Result, Value};
+use djinn_core::devices::DeviceType;
 
 mod alias;
 use alias::Alias;
@@ -164,6 +165,7 @@ impl Parser {
         match token.kind {
             TokenKind::NoOp => Ok(Some(StatementNode::new(Opcode::NoOp, token.location))),
             TokenKind::Yield => Ok(Some(StatementNode::new(Opcode::Yield, token.location))),
+            TokenKind::Dev => self.parse_dev_call(lexer, token.location),
             TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
             TokenKind::Push => self.parse_push(lexer, token.location),
@@ -200,6 +202,18 @@ impl Parser {
     ) -> Result<Option<StatementNode>> {
         let value = self.consume_value_or_alias(lexer)?;
         Ok(Some(StatementNode::new(Opcode::Push(value), location)))
+    }
+
+    fn parse_dev_call(
+        &mut self,
+        lexer: &mut Lexer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let device_type = self.consume_alias(lexer)?;
+        let api_op = self.consume_alias(lexer)?;
+
+        let opcode = Opcode::Device(DeviceType::from(device_type), api_op);
+        Ok(Some(StatementNode::new(opcode, location)))
     }
 }
 
