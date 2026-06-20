@@ -3,7 +3,8 @@ import { useRef, useEffect } from "react";
 import { basicSetup } from "codemirror";
 import { EditorView, keymap } from "@codemirror/view";
 import { EditorState, Prec } from "@codemirror/state";
-import { defaultKeymap } from "@codemirror/commands";
+import { defaultKeymap, indentWithTab } from "@codemirror/commands";
+import { indentUnit } from "@codemirror/language";
 
 import { useProjectStore } from "~/features/base/project.store";
 import { asm } from "../asm-lang/asm-lezer";
@@ -37,7 +38,8 @@ export default function CodeEditor() {
         basicSetup,
         codeEditorTheme,
         overridenShortcuts,
-        keymap.of(defaultKeymap),
+        indentUnit.of("  "),
+        keymap.of([...defaultKeymap, indentWithTab]),
         errorMarkers,
         asm(),
         EditorView.editorAttributes.of({
