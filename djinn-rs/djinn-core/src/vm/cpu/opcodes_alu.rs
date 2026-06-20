@@ -21,6 +21,13 @@ impl Cpu {
         self.stack.push(a.or(&b));
         Ok(false)
     }
+
+    pub fn exec_opcode_xor(&mut self) -> Result<bool> {
+        let b = self.stack.pop()?;
+        let a = self.stack.pop()?;
+        self.stack.push(a.xor(&b));
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -82,5 +89,14 @@ mod tests {
         cpu.stack.push(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_or(), Ok(false));
         assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_xor_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Bool(true));
+        cpu.stack.push(Value::Bool(true));
+        assert_eq!(cpu.exec_opcode_xor(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(false)));
     }
 }

@@ -41,6 +41,12 @@ impl Value {
     pub fn not(&self) -> Self {
         Self::Bool(!self.as_bool())
     }
+
+    pub fn xor(&self, other: &Self) -> Self {
+        let a = self.as_bool();
+        let b = other.as_bool();
+        Self::Bool((a || b) && !(a && b))
+    }
 }
 
 impl fmt::Display for Value {
