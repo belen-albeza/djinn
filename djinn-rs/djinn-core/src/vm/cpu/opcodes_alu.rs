@@ -66,6 +66,48 @@ impl Cpu {
         self.stack.push(Value::Numeric(a.rem(b)?));
         Ok(false)
     }
+
+    pub fn exec_opcode_eq(&mut self) -> Result<bool> {
+        let b = self.stack.pop()?;
+        let a = self.stack.pop()?;
+        self.stack.push(Value::Bool(a == b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_neq(&mut self) -> Result<bool> {
+        let b = self.stack.pop()?;
+        let a = self.stack.pop()?;
+        self.stack.push(Value::Bool(a != b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_lt(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a < b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_leq(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a <= b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_gt(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a > b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_geq(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a >= b));
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -210,5 +252,68 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         cpu.stack.push(Value::Numeric(Number::Int(0)));
         assert_eq!(cpu.exec_opcode_rem(), Err(RuntimeError::DivisionByZero));
+    }
+
+    #[test]
+    fn test_eq_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Bool(true));
+        cpu.stack.push(Value::Bool(true));
+        assert_eq!(cpu.exec_opcode_eq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_eq_opcode_with_mixed_types() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Bool(true));
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(cpu.exec_opcode_eq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(false)));
+    }
+
+    #[test]
+    fn test_eq_opcode_casts_ints_to_floats() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        cpu.stack.push(Value::Numeric(Number::Float(1.0)));
+        assert_eq!(cpu.exec_opcode_eq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_neq_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Bool(true));
+        cpu.stack.push(Value::Bool(true));
+        assert_eq!(cpu.exec_opcode_neq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(false)));
+    }
+
+    #[test]
+    fn test_lt_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        assert_eq!(cpu.exec_opcode_lt(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_leq_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        assert_eq!(cpu.exec_opcode_leq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_gt_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(cpu.exec_opcode_gt(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
     }
 }
