@@ -32,6 +32,18 @@ impl ops::Sub for Number {
     }
 }
 
+impl ops::Mul for Number {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Number::Float(x), Number::Float(y)) => Number::Float(x * y),
+            (Number::Int(x), Number::Int(y)) => Number::Int(x * y),
+            (Number::Float(x), Number::Int(y)) => Number::Float(x * y as f64),
+            (Number::Int(x), Number::Float(y)) => Number::Float(x as f64 * y),
+        }
+    }
+}
+
 impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

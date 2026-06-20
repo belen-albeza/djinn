@@ -43,6 +43,7 @@ impl Cpu {
             Opcode::Xor => self.exec_opcode_xor(),
             Opcode::Add => self.exec_opcode_add(),
             Opcode::Sub => self.exec_opcode_sub(),
+            Opcode::Mul => self.exec_opcode_mul(),
         }
     }
 

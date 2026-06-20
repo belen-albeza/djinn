@@ -17,4 +17,5 @@ pub enum Opcode {
     Xor,
     Add,
     Sub,
+    Mul,
 }

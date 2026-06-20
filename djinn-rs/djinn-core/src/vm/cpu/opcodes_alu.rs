@@ -43,6 +43,13 @@ impl Cpu {
         self.stack.push(Value::Numeric(a - b));
         Ok(false)
     }
+
+    pub fn exec_opcode_mul(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Numeric(a * b));
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -144,5 +151,14 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Float(2.0)));
         assert_eq!(cpu.exec_opcode_sub(), Ok(false));
         assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Float(-3.0))));
+    }
+
+    #[test]
+    fn test_mul_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        cpu.stack.push(Value::Numeric(Number::Int(3)));
+        assert_eq!(cpu.exec_opcode_mul(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(6))));
     }
 }
