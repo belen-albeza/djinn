@@ -44,6 +44,7 @@ impl Cpu {
             Opcode::Add => self.exec_opcode_add(),
             Opcode::Sub => self.exec_opcode_sub(),
             Opcode::Mul => self.exec_opcode_mul(),
+            Opcode::Div => self.exec_opcode_div(),
         }
     }
 

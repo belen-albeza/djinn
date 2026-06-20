@@ -1,4 +1,4 @@
-use crate::vm::RuntimeError;
+use crate::vm::{Result, RuntimeError};
 use std::fmt;
 use std::ops;
 
@@ -13,7 +13,7 @@ impl ops::Add for Number {
     fn add(self, other: Self) -> Self::Output {
         match (self, other) {
             (Number::Float(x), Number::Float(y)) => Number::Float(x + y),
-            (Number::Int(x), Number::Int(y)) => Number::Int(x + y),
+            (Number::Int(x), Number::Int(y)) => Number::Int(x.wrapping_add(y)),
             (Number::Float(x), Number::Int(y)) => Number::Float(x + y as f64),
             (Number::Int(x), Number::Float(y)) => Number::Float(x as f64 + y),
         }
@@ -25,7 +25,7 @@ impl ops::Sub for Number {
     fn sub(self, other: Self) -> Self::Output {
         match (self, other) {
             (Number::Float(x), Number::Float(y)) => Number::Float(x - y),
-            (Number::Int(x), Number::Int(y)) => Number::Int(x - y),
+            (Number::Int(x), Number::Int(y)) => Number::Int(x.wrapping_sub(y)),
             (Number::Float(x), Number::Int(y)) => Number::Float(x - y as f64),
             (Number::Int(x), Number::Float(y)) => Number::Float(x as f64 - y),
         }
@@ -37,9 +37,24 @@ impl ops::Mul for Number {
     fn mul(self, other: Self) -> Self::Output {
         match (self, other) {
             (Number::Float(x), Number::Float(y)) => Number::Float(x * y),
-            (Number::Int(x), Number::Int(y)) => Number::Int(x * y),
+            (Number::Int(x), Number::Int(y)) => Number::Int(x.wrapping_mul(y)),
             (Number::Float(x), Number::Int(y)) => Number::Float(x * y as f64),
             (Number::Int(x), Number::Float(y)) => Number::Float(x as f64 * y),
+        }
+    }
+}
+
+impl ops::Div for Number {
+    type Output = Result<Self>;
+    fn div(self, other: Self) -> Self::Output {
+        if other == Number::Int(0) || other == Number::Float(0.0) {
+            return Err(RuntimeError::DivisionByZero);
+        }
+        match (self, other) {
+            (Number::Float(x), Number::Float(y)) => Ok(Number::Float(x / y)),
+            (Number::Int(x), Number::Int(y)) => Ok(Number::Int(x.wrapping_div(y))),
+            (Number::Float(x), Number::Int(y)) => Ok(Number::Float(x / y as f64)),
+            (Number::Int(x), Number::Float(y)) => Ok(Number::Float(x as f64 / y)),
         }
     }
 }
@@ -98,7 +113,7 @@ impl fmt::Display for Value {
 
 impl TryFrom<Value> for Number {
     type Error = RuntimeError;
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
+    fn try_from(value: Value) -> Result<Self> {
         match value {
             Value::Numeric(number) => Ok(number),
             Value::Bool(_) => Err(RuntimeError::TypeError(format!(

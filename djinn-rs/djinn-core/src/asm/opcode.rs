@@ -18,4 +18,5 @@ pub enum Opcode {
     Add,
     Sub,
     Mul,
+    Div,
 }
