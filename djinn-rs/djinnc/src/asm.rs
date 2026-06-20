@@ -1,17 +1,19 @@
 use std::fmt;
 
+mod analyzer;
 mod error;
 mod lexer;
 mod parser;
 mod token;
 
+use analyzer::Analyzer;
 use djinn_core::asm::{Opcode, ProcessType};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;
 use parser::Parser;
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
     pub line: usize,
     pub column: usize,
@@ -23,21 +25,31 @@ impl fmt::Display for Location {
     }
 }
 
+impl Default for Location {
+    fn default() -> Self {
+        Self { line: 1, column: 1 }
+    }
+}
+
 pub fn compile(source_code: &str) -> Result<Rom> {
     let mut lexer = Lexer::new(source_code);
     let mut parser = Parser::new();
+    let mut analyzer = Analyzer::new();
 
     // TODO: parse all processes instead
-    if let Some(main_process) = parser.parse_process(&mut lexer)? {
+    if let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
+        analyzer.check_main_process_exists()?;
         Ok(Rom::new(
-            main_process
+            process
                 .instructions
                 .into_iter()
                 .map(|statement| statement.raw_opcode)
                 .collect(),
         ))
     } else {
-        Err(AssemblerError::NoMainProcessFound(lexer.current_location()))
+        Err(AssemblerError::MainProcessNotFound(
+            lexer.current_location(),
+        ))
     }
 }
 
@@ -50,7 +62,7 @@ mod tests {
         let res = compile("");
         assert_eq!(
             res,
-            Err(AssemblerError::NoMainProcessFound(Location {
+            Err(AssemblerError::MainProcessNotFound(Location {
                 line: 1,
                 column: 1
             }))

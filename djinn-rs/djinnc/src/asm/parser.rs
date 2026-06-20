@@ -1,3 +1,4 @@
+use crate::asm::analyzer::Analyzer;
 use crate::asm::lexer::Lexer;
 use crate::asm::token::{Token, TokenKind};
 use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result};
@@ -38,13 +39,17 @@ impl Parser {
         }
     }
 
-    pub fn parse_process(&mut self, lexer: &mut Lexer) -> Result<Option<ProcessNode>> {
+    pub fn parse_process(
+        &mut self,
+        lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
+    ) -> Result<Option<ProcessNode>> {
         // Stop parsing at EOF
         if self.consume_peeked(lexer, TokenKind::Eof)?.is_some() {
             return Ok(None);
         }
 
-        let (location, name, process_type) = self.parse_process_declaration(lexer)?;
+        let (location, name, process_type) = self.parse_process_declaration(lexer, analyzer)?;
 
         let instructions = self.parse_statements(lexer)?;
 
@@ -59,10 +64,11 @@ impl Parser {
     fn consume(&mut self, lexer: &mut Lexer, expected: &[TokenKind]) -> Result<Token> {
         let token = lexer.scan_token()?;
         if !expected.contains(&token.kind) {
-            return Err(AssemblerError::UnexpectedToken(
-                token.location,
-                token.lexeme,
-            ));
+            return Err(AssemblerError::UnexpectedToken {
+                location: token.location,
+                token: token.lexeme,
+                expected: expected.iter().map(|k| k.to_string()).collect(),
+            });
         }
         Ok(token)
     }
@@ -86,16 +92,17 @@ impl Parser {
     fn parse_process_declaration(
         &mut self,
         lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
     ) -> Result<(Location, String, ProcessType)> {
         let tilde = self.consume(lexer, &[TokenKind::Tilde])?;
 
         let identifier = self.consume(lexer, &[TokenKind::Id])?;
         self.current_process = identifier.lexeme.clone();
+        let process_type = analyzer.add_process(&self.current_process, tilde.location)?;
 
         self.consume(lexer, &[TokenKind::Colon])?;
 
-        // TODO: Return process type (this is done by the analyzer)
-        Ok((tilde.location, identifier.lexeme, ProcessType(1)))
+        Ok((tilde.location, identifier.lexeme, process_type))
     }
 
     fn parse_statements(&mut self, lexer: &mut Lexer) -> Result<Vec<StatementNode>> {
@@ -119,10 +126,11 @@ impl Parser {
         match token.kind {
             TokenKind::NoOp => Ok(Some(StatementNode::new(Opcode::NoOp, token.location))),
             TokenKind::Yield => Ok(Some(StatementNode::new(Opcode::Yield, token.location))),
-            _ => Err(AssemblerError::UnexpectedToken(
-                token.location,
-                token.lexeme,
-            )),
+            _ => Err(AssemblerError::UnexpectedToken {
+                location: token.location,
+                token: token.lexeme,
+                expected: vec![TokenKind::NoOp.to_string(), TokenKind::Yield.to_string()],
+            }),
         }
     }
 }
@@ -135,7 +143,9 @@ mod tests {
     fn test_parse_process_declaration() {
         let mut lexer = Lexer::new("~main:\nnoop");
         let mut parser = Parser::new();
-        let process = parser.parse_process(&mut lexer).unwrap();
+        let mut analyzer = Analyzer::new();
+
+        let process = parser.parse_process(&mut lexer, &mut analyzer).unwrap();
         assert_eq!(
             process,
             Some(ProcessNode {
