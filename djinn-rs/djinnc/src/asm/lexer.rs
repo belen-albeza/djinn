@@ -153,6 +153,9 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "push" => Some(TokenKind::Push),
         "pop" => Some(TokenKind::Pop),
         "dup" => Some(TokenKind::Dup),
+        // values
+        "true" => Some(TokenKind::Bool(true)),
+        "false" => Some(TokenKind::Bool(false)),
         _ => None,
     }
 }
@@ -248,6 +251,14 @@ yld ;actual opcode
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Int(-123));
         let mut lexer = Lexer::new("-123.456");
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Float(-123.456));
+    }
+
+    #[test]
+    fn test_scan_boolean_literal() {
+        let mut lexer = Lexer::new("true");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Bool(true));
+        let mut lexer = Lexer::new("false");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Bool(false));
     }
 
     #[test]

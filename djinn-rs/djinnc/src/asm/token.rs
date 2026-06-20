@@ -11,6 +11,7 @@ pub enum TokenKind {
     Id,
     Int(i32),
     Float(f64),
+    Bool(bool),
     // Process control opcodes
     NoOp,
     Yield,
@@ -31,6 +32,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Yield => write!(f, "YLD"),
             TokenKind::Int(_) => write!(f, "Int"),
             TokenKind::Float(_) => write!(f, "Float"),
+            TokenKind::Bool(_) => write!(f, "Bool"),
             _ => write!(f, "{}", format!("{self:?}").to_ascii_uppercase()),
         }
     }

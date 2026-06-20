@@ -94,11 +94,16 @@ impl Parser {
         let value = match token.kind {
             TokenKind::Int(value) => Value::Numeric(Number::Int(value)),
             TokenKind::Float(value) => Value::Numeric(Number::Float(value)),
+            TokenKind::Bool(value) => Value::Bool(value),
             _ => {
                 return Err(AssemblerError::UnexpectedToken {
                     location: token.location,
                     token: token.lexeme,
-                    expected: vec![TokenKind::Int(0), TokenKind::Float(0.0)],
+                    expected: vec![
+                        TokenKind::Int(0),
+                        TokenKind::Float(0.0),
+                        TokenKind::Bool(false),
+                    ],
                 });
             }
         };
@@ -190,14 +195,14 @@ mod tests {
 
     #[test]
     fn test_parse_opcode_with_value() {
-        let mut lexer = Lexer::new("push 1");
+        let mut lexer = Lexer::new("push true");
         let mut parser = Parser::new();
 
         let statement = parser.parse_single_statement(&mut lexer).unwrap();
         assert_eq!(
             statement,
             Some(StatementNode::new(
-                Opcode::Push(Value::Numeric(Number::Int(1))),
+                Opcode::Push(Value::Bool(true)),
                 Location { line: 1, column: 1 }
             ))
         );
