@@ -4,10 +4,12 @@ mod process;
 use crate::asm::{Opcode, ProcessId, ProcessType};
 use process::{Process, Status};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq)]
 pub enum RuntimeError {
     #[error("Invalid ROM")]
     LoadRomError,
+    #[error("Stack underflow")]
+    StackUnderflow,
 }
 
 type Result<T> = std::result::Result<T, RuntimeError>;
