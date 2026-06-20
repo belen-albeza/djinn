@@ -39,6 +39,7 @@ impl Cpu {
             }
             Opcode::Not => self.exec_opcode_not(),
             Opcode::And => self.exec_opcode_and(),
+            Opcode::Or => self.exec_opcode_or(),
             _ => unimplemented!("Opcode not implemented: {:?}", opcode),
         }
     }

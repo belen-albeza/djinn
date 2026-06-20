@@ -153,6 +153,7 @@ impl Parser {
             TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             TokenKind::Not => Ok(Some(StatementNode::new(Opcode::Not, token.location))),
             TokenKind::And => Ok(Some(StatementNode::new(Opcode::And, token.location))),
+            TokenKind::Or => Ok(Some(StatementNode::new(Opcode::Or, token.location))),
             _ => Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,
