@@ -7,6 +7,7 @@ pub enum TokenKind {
     // 1-char tokens
     Colon,
     Tilde,
+    Hash,
     // Multi-char tokens
     Id,
     Int(i32),
@@ -28,6 +29,7 @@ impl fmt::Display for TokenKind {
         match self {
             TokenKind::Colon => write!(f, ":"),
             TokenKind::Tilde => write!(f, "~"),
+            TokenKind::Hash => write!(f, "#"),
             TokenKind::Id => write!(f, "Identifier"),
             TokenKind::Yield => write!(f, "YLD"),
             TokenKind::Int(_) => write!(f, "Int"),

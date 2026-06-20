@@ -150,6 +150,7 @@ impl Parser {
             TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
             TokenKind::Push => self.parse_push(lexer, token.location),
+            TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             _ => Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,
@@ -203,6 +204,21 @@ mod tests {
             statement,
             Some(StatementNode::new(
                 Opcode::Push(Value::Bool(true)),
+                Location { line: 1, column: 1 }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_hash_as_shortcut_for_push() {
+        let mut lexer = Lexer::new("#1.234");
+        let mut parser = Parser::new();
+
+        let statement = parser.parse_single_statement(&mut lexer).unwrap();
+        assert_eq!(
+            statement,
+            Some(StatementNode::new(
+                Opcode::Push(Value::Numeric(Number::Float(1.234))),
                 Location { line: 1, column: 1 }
             ))
         );
