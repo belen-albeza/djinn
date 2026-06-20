@@ -20,6 +20,8 @@ pub enum Opcode {
     Mul,
     Div,
     Mod,
+    Inc,
+    Dec,
     Eq,
     Neq,
     Lt,
