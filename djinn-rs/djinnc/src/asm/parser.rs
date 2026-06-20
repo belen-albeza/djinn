@@ -155,6 +155,11 @@ impl Parser {
             TokenKind::And => Ok(Some(StatementNode::new(Opcode::And, token.location))),
             TokenKind::Or => Ok(Some(StatementNode::new(Opcode::Or, token.location))),
             TokenKind::Xor => Ok(Some(StatementNode::new(Opcode::Xor, token.location))),
+            TokenKind::Add => Ok(Some(StatementNode::new(Opcode::Add, token.location))),
+            TokenKind::Sub => Ok(Some(StatementNode::new(Opcode::Sub, token.location))),
+            TokenKind::Mul => Ok(Some(StatementNode::new(Opcode::Mul, token.location))),
+            TokenKind::Div => Ok(Some(StatementNode::new(Opcode::Div, token.location))),
+            TokenKind::Mod => Ok(Some(StatementNode::new(Opcode::Mod, token.location))),
             _ => Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,

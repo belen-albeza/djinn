@@ -12,9 +12,11 @@ pub enum RuntimeError {
     StackUnderflow,
     #[error("Type error: {0}")]
     TypeError(String),
+    #[error("Division by zero")]
+    DivisionByZero,
 }
 
-type Result<T> = std::result::Result<T, RuntimeError>;
+pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 pub trait Devices {
     fn video_buffer(&self) -> &[u8];

@@ -15,4 +15,9 @@ pub enum Opcode {
     And,
     Or,
     Xor,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
 }
