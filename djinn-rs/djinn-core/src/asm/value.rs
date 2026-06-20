@@ -21,6 +21,28 @@ pub enum Value {
     Bool(bool),
 }
 
+impl Value {
+    pub fn as_bool(&self) -> bool {
+        match self {
+            Value::Bool(x) => *x,
+            Value::Numeric(Number::Int(x)) => *x != 0,
+            Value::Numeric(Number::Float(x)) => *x != 0.0,
+        }
+    }
+
+    pub fn and(&self, other: &Self) -> Self {
+        Self::Bool(self.as_bool() && other.as_bool())
+    }
+
+    pub fn or(&self, other: &Self) -> Self {
+        Self::Bool(self.as_bool() || other.as_bool())
+    }
+
+    pub fn not(&self) -> Self {
+        Self::Bool(!self.as_bool())
+    }
+}
+
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
