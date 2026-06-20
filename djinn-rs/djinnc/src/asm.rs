@@ -7,7 +7,7 @@ mod parser;
 mod token;
 
 use analyzer::Analyzer;
-use djinn_core::asm::{Opcode, ProcessDefinition, ProcessType};
+use djinn_core::asm::{Number, Opcode, ProcessDefinition, ProcessType, Value};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;

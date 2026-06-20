@@ -1,14 +1,29 @@
 use crate::asm::Location;
+use crate::asm::token::TokenKind;
+
+fn unexpected_token_expecting(expected: &[TokenKind]) -> String {
+    match expected {
+        [] => " Expecting any opcode.".to_string(),
+        expected => format!(
+            " Expecting: {}.",
+            expected
+                .iter()
+                .map(|e| format!("`{e}`"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+    }
+}
 
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum AssemblerError {
     #[error("Unexpected character at {0}: {1}.")]
     UnexpectedCharacter(Location, char),
-    #[error("Unexpected token at {location}: `{token}`. Expecting: {}.", .expected.iter().map(|e| format!("`{e}`")).collect::<Vec<String>>().join(", "))]
+    #[error("Unexpected token at {location}: `{token}`.{}", unexpected_token_expecting(.expected))]
     UnexpectedToken {
         location: Location,
         token: String,
-        expected: Vec<String>,
+        expected: Vec<TokenKind>,
     },
     #[error("Main process not found.")]
     MainProcessNotFound(Location),
@@ -32,3 +47,34 @@ impl AssemblerError {
 }
 
 pub type Result<T> = std::result::Result<T, AssemblerError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unexpected_token_message_without_expected() {
+        let err = AssemblerError::UnexpectedToken {
+            location: Location { line: 1, column: 1 },
+            token: "foo".into(),
+            expected: vec![],
+        };
+        assert_eq!(
+            err.message(),
+            "Unexpected token at Ln 1, Col 1: `foo`. Expecting any opcode."
+        );
+    }
+
+    #[test]
+    fn unexpected_token_message_with_expected() {
+        let err = AssemblerError::UnexpectedToken {
+            location: Location { line: 2, column: 3 },
+            token: "bar".into(),
+            expected: vec![TokenKind::NoOp, TokenKind::Yield],
+        };
+        assert_eq!(
+            err.message(),
+            "Unexpected token at Ln 2, Col 3: `bar`. Expecting: `NOOP`, `YLD`."
+        );
+    }
+}

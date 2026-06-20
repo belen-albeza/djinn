@@ -60,6 +60,7 @@ impl<'a> Lexer<'a> {
                 ':' => TokenKind::Colon,
                 '~' => TokenKind::Tilde,
                 // multi-char tokens
+                _ if x.is_ascii_digit() || x == '-' => self.scan_number_literal()?,
                 _ if x.is_alphabetic() => self.scan_identifier_or_opcode()?,
                 _ => {
                     return Err(AssemblerError::UnexpectedCharacter(self.start_location, x));
@@ -117,6 +118,29 @@ impl<'a> Lexer<'a> {
         }
         let kind = opcode_for_lexeme(&self.buffer).unwrap_or(TokenKind::Id);
         Ok(kind)
+    }
+
+    fn scan_number_literal(&mut self) -> Result<TokenKind> {
+        let mut has_decimal = false;
+
+        while let Some(x) = self.source.peek() {
+            match x {
+                '.' if !has_decimal => {
+                    has_decimal = true;
+                    self.advance();
+                }
+                _ if x.is_ascii_digit() => {
+                    self.advance();
+                }
+                _ => break,
+            }
+        }
+
+        if has_decimal {
+            Ok(TokenKind::Float(self.buffer.parse::<f64>().unwrap()))
+        } else {
+            Ok(TokenKind::Int(self.buffer.parse::<i32>().unwrap()))
+        }
     }
 }
 
@@ -212,6 +236,18 @@ yld ;actual opcode
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Id);
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Colon);
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
+    }
+
+    #[test]
+    fn test_scan_number_literal() {
+        let mut lexer = Lexer::new("123");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Int(123));
+        let mut lexer = Lexer::new("123.456");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Float(123.456));
+        let mut lexer = Lexer::new("-123");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Int(-123));
+        let mut lexer = Lexer::new("-123.456");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Float(-123.456));
     }
 
     #[test]

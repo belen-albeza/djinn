@@ -9,6 +9,8 @@ pub enum TokenKind {
     Tilde,
     // Multi-char tokens
     Id,
+    Int(i32),
+    Float(f64),
     // Process control opcodes
     NoOp,
     Yield,
@@ -27,6 +29,8 @@ impl fmt::Display for TokenKind {
             TokenKind::Tilde => write!(f, "~"),
             TokenKind::Id => write!(f, "Identifier"),
             TokenKind::Yield => write!(f, "YLD"),
+            TokenKind::Int(_) => write!(f, "Int"),
+            TokenKind::Float(_) => write!(f, "Float"),
             _ => write!(f, "{}", format!("{self:?}").to_ascii_uppercase()),
         }
     }
