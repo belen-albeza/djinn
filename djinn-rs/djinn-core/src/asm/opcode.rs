@@ -22,6 +22,7 @@ pub enum Opcode {
     Mod,
     Eq,
     Neq,
-    Lth,
+    Lt,
     Leq,
+    Gt,
 }

@@ -162,8 +162,9 @@ impl Parser {
             TokenKind::Mod => Ok(Some(StatementNode::new(Opcode::Mod, token.location))),
             TokenKind::Eq => Ok(Some(StatementNode::new(Opcode::Eq, token.location))),
             TokenKind::Neq => Ok(Some(StatementNode::new(Opcode::Neq, token.location))),
-            TokenKind::Lth => Ok(Some(StatementNode::new(Opcode::Lth, token.location))),
+            TokenKind::Lt => Ok(Some(StatementNode::new(Opcode::Lt, token.location))),
             TokenKind::Leq => Ok(Some(StatementNode::new(Opcode::Leq, token.location))),
+            TokenKind::Gt => Ok(Some(StatementNode::new(Opcode::Gt, token.location))),
             _ => Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,

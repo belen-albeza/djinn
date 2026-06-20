@@ -81,7 +81,7 @@ impl Cpu {
         Ok(false)
     }
 
-    pub fn exec_opcode_lth(&mut self) -> Result<bool> {
+    pub fn exec_opcode_lt(&mut self) -> Result<bool> {
         let b: Number = self.stack.pop()?.try_into()?;
         let a: Number = self.stack.pop()?.try_into()?;
         self.stack.push(Value::Bool(a < b));
@@ -92,6 +92,13 @@ impl Cpu {
         let b: Number = self.stack.pop()?.try_into()?;
         let a: Number = self.stack.pop()?.try_into()?;
         self.stack.push(Value::Bool(a <= b));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_gt(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a > b));
         Ok(false)
     }
 }
@@ -277,11 +284,11 @@ mod tests {
     }
 
     #[test]
-    fn test_lth_opcode() {
+    fn test_lt_opcode() {
         let mut cpu = Cpu::new();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
         cpu.stack.push(Value::Numeric(Number::Int(2)));
-        assert_eq!(cpu.exec_opcode_lth(), Ok(false));
+        assert_eq!(cpu.exec_opcode_lt(), Ok(false));
         assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
     }
 
