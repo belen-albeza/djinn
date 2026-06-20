@@ -101,6 +101,13 @@ impl Cpu {
         self.stack.push(Value::Bool(a > b));
         Ok(false)
     }
+
+    pub fn exec_opcode_geq(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Bool(a >= b));
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -298,6 +305,15 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Int(2)));
         cpu.stack.push(Value::Numeric(Number::Int(2)));
         assert_eq!(cpu.exec_opcode_leq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_gt_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(cpu.exec_opcode_gt(), Ok(false));
         assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
     }
 }

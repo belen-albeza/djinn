@@ -51,6 +51,7 @@ impl Cpu {
             Opcode::Lt => self.exec_opcode_lt(),
             Opcode::Leq => self.exec_opcode_leq(),
             Opcode::Gt => self.exec_opcode_gt(),
+            Opcode::Geq => self.exec_opcode_geq(),
         }
     }
 

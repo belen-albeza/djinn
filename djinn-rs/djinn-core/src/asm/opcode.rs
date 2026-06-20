@@ -25,4 +25,5 @@ pub enum Opcode {
     Lt,
     Leq,
     Gt,
+    Geq,
 }
