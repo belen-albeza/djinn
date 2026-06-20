@@ -122,8 +122,13 @@ impl<'a> Lexer<'a> {
 
 fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
     match lexeme {
+        // process control
         "noop" => Some(TokenKind::NoOp),
         "yld" => Some(TokenKind::Yield),
+        // stack
+        "push" => Some(TokenKind::Push),
+        "pop" => Some(TokenKind::Pop),
+        "dup" => Some(TokenKind::Dup),
         _ => None,
     }
 }
@@ -186,10 +191,18 @@ yld ;actual opcode
 
     #[test]
     fn test_scan_opcodes() {
-        let mut lexer = Lexer::new("noop yld");
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::NoOp);
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Yield);
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
+        let opcodes = vec![
+            ("noop", TokenKind::NoOp),
+            ("yld", TokenKind::Yield),
+            ("push", TokenKind::Push),
+            ("pop", TokenKind::Pop),
+            ("dup", TokenKind::Dup),
+        ];
+
+        for (lexeme, kind) in opcodes {
+            let mut lexer = Lexer::new(lexeme);
+            assert_eq!(lexer.scan_token().unwrap().kind, kind);
+        }
     }
 
     #[test]

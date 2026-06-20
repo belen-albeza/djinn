@@ -9,9 +9,13 @@ pub enum TokenKind {
     Tilde,
     // Multi-char tokens
     Id,
-    // Opcodes
+    // Process control opcodes
     NoOp,
     Yield,
+    // Stack opcodes
+    Push,
+    Pop,
+    Dup,
     // Control
     Eof,
 }
