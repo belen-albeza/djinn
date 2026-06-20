@@ -20,6 +20,11 @@ pub enum TokenKind {
     Push,
     Pop,
     Dup,
+    // ALU
+    Not,
+    And,
+    Or,
+    Xor,
     // Control
     Eof,
 }

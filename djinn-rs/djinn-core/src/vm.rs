@@ -10,6 +10,8 @@ pub enum RuntimeError {
     LoadRomError,
     #[error("Stack underflow")]
     StackUnderflow,
+    #[error("Type error: {0}")]
+    TypeError(String),
 }
 
 type Result<T> = std::result::Result<T, RuntimeError>;

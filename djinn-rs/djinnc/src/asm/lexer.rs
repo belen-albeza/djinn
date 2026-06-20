@@ -157,6 +157,11 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         // values
         "true" => Some(TokenKind::Bool(true)),
         "false" => Some(TokenKind::Bool(false)),
+        // alu
+        "not" => Some(TokenKind::Not),
+        "and" => Some(TokenKind::And),
+        "or" => Some(TokenKind::Or),
+        "xor" => Some(TokenKind::Xor),
         _ => None,
     }
 }
@@ -225,6 +230,10 @@ yld ;actual opcode
             ("push", TokenKind::Push),
             ("pop", TokenKind::Pop),
             ("dup", TokenKind::Dup),
+            ("not", TokenKind::Not),
+            ("and", TokenKind::And),
+            ("or", TokenKind::Or),
+            ("xor", TokenKind::Xor),
         ];
 
         for (lexeme, kind) in opcodes {

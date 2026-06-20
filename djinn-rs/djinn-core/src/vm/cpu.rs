@@ -3,6 +3,7 @@ use crate::vm::Result;
 
 mod stack;
 use stack::Stack;
+mod opcodes_alu;
 
 pub struct Cpu {
     pc: usize,
@@ -36,6 +37,8 @@ impl Cpu {
                 self.stack.push(value);
                 Ok(false)
             }
+            Opcode::Not => self.exec_opcode_not(),
+            _ => unimplemented!("Opcode not implemented: {:?}", opcode),
         }
     }
 
