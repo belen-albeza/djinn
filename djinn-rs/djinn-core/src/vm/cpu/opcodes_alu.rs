@@ -1,4 +1,4 @@
-use std::ops::Div;
+use std::ops::{Div, Rem};
 
 use super::Cpu;
 use crate::asm::{Number, Value};
@@ -57,6 +57,13 @@ impl Cpu {
         let b: Number = self.stack.pop()?.try_into()?;
         let a: Number = self.stack.pop()?.try_into()?;
         self.stack.push(Value::Numeric(a.div(b)?));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_rem(&mut self) -> Result<bool> {
+        let b: Number = self.stack.pop()?.try_into()?;
+        let a: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Numeric(a.rem(b)?));
         Ok(false)
     }
 }
@@ -186,5 +193,22 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         cpu.stack.push(Value::Numeric(Number::Int(0)));
         assert_eq!(cpu.exec_opcode_div(), Err(RuntimeError::DivisionByZero));
+    }
+
+    #[test]
+    fn test_rem_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(6)));
+        cpu.stack.push(Value::Numeric(Number::Int(2)));
+        assert_eq!(cpu.exec_opcode_rem(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(0))));
+    }
+
+    #[test]
+    fn test_rem_opcode_returns_division_by_zero_error() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Float(1.0)));
+        cpu.stack.push(Value::Numeric(Number::Int(0)));
+        assert_eq!(cpu.exec_opcode_rem(), Err(RuntimeError::DivisionByZero));
     }
 }

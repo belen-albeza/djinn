@@ -59,6 +59,21 @@ impl ops::Div for Number {
     }
 }
 
+impl ops::Rem for Number {
+    type Output = Result<Self>;
+    fn rem(self, other: Self) -> Self::Output {
+        if other == Number::Int(0) || other == Number::Float(0.0) {
+            return Err(RuntimeError::DivisionByZero);
+        }
+        match (self, other) {
+            (Number::Float(x), Number::Float(y)) => Ok(Number::Float(x.rem_euclid(y))),
+            (Number::Int(x), Number::Int(y)) => Ok(Number::Int(x.wrapping_rem_euclid(y))),
+            (Number::Float(x), Number::Int(y)) => Ok(Number::Float(x.rem_euclid(y as f64))),
+            (Number::Int(x), Number::Float(y)) => Ok(Number::Float((x as f64).rem_euclid(y))),
+        }
+    }
+}
+
 impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

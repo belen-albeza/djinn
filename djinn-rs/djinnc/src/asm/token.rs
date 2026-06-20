@@ -29,6 +29,7 @@ pub enum TokenKind {
     Sub,
     Mul,
     Div,
+    Mod,
     // Control
     Eof,
 }
