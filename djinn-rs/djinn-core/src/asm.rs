@@ -34,3 +34,15 @@ impl ProcessDefinition {
         &self.instructions
     }
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Number {
+    Float(f64),
+    Int(i32),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Value {
+    Numeric(Number),
+    Bool(bool),
+}

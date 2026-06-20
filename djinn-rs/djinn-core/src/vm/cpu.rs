@@ -1,13 +1,20 @@
 use super::Result;
 use crate::asm::Opcode;
 
+mod stack;
+use stack::Stack;
+
 pub struct Cpu {
     pc: usize,
+    stack: Stack,
 }
 
 impl Cpu {
     pub fn new() -> Self {
-        Self { pc: 0 }
+        Self {
+            pc: 0,
+            stack: Stack::default(),
+        }
     }
 
     /// Executes an opcode and returns whether the process has yielded.
