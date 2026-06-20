@@ -41,6 +41,7 @@ impl Cpu {
             Opcode::And => self.exec_opcode_and(),
             Opcode::Or => self.exec_opcode_or(),
             Opcode::Xor => self.exec_opcode_xor(),
+            Opcode::Add => self.exec_opcode_add(),
         }
     }
 

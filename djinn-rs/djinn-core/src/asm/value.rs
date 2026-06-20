@@ -1,9 +1,23 @@
+use crate::vm::RuntimeError;
 use std::fmt;
+use std::ops;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Number {
     Float(f64),
     Int(i32),
+}
+
+impl ops::Add for Number {
+    type Output = Self;
+    fn add(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Number::Float(x), Number::Float(y)) => Number::Float(x + y),
+            (Number::Int(x), Number::Int(y)) => Number::Int(x + y),
+            (Number::Float(x), Number::Int(y)) => Number::Float(x + y as f64),
+            (Number::Int(x), Number::Float(y)) => Number::Float(x as f64 + y),
+        }
+    }
 }
 
 impl fmt::Display for Number {
@@ -54,6 +68,19 @@ impl fmt::Display for Value {
         match self {
             Value::Numeric(number) => write!(f, "{}", number),
             Value::Bool(bool) => write!(f, "{}", bool),
+        }
+    }
+}
+
+impl TryFrom<Value> for Number {
+    type Error = RuntimeError;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Numeric(number) => Ok(number),
+            Value::Bool(_) => Err(RuntimeError::TypeError(format!(
+                "`{}` is not a number",
+                value
+            ))),
         }
     }
 }

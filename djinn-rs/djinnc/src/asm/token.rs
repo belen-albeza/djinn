@@ -25,6 +25,7 @@ pub enum TokenKind {
     And,
     Or,
     Xor,
+    Add,
     // Control
     Eof,
 }
