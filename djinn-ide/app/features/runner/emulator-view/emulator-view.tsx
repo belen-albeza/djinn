@@ -5,6 +5,7 @@ import { Modal } from "~/ui/modal";
 import { cn } from "~/utils/cn";
 import { useStatusBarStore } from "~/features/base/status-bar/status.store";
 import { useEmulatorStore } from "../emulator.store";
+import { useEditorStore } from "~/features/code/code-editor/editor.store";
 
 // FIXME: maybe get these from somewhere else
 const CANVAS_WIDTH = 160;
@@ -61,6 +62,13 @@ export default function EmulatorView({
             .setMessages([
               { type: "error", message: `Runtime error: ${error.message}` },
             ]);
+          useEditorStore.getState().setErrors([
+            {
+              line: error.position.line,
+              column: error.position.column,
+              message: error.message,
+            },
+          ]);
         } else {
           useStatusBarStore.getState().setMessages([]);
         }
