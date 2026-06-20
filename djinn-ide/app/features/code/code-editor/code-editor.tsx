@@ -34,6 +34,18 @@ const overridenShortcuts = Prec.highest(
 // Custom keymaps that do not conflict with the default setup
 const customKeymap = [indentWithTab];
 
+// To show the cursor position in the status bar
+const cursorListener = EditorView.updateListener.of((update) => {
+  if (update.selectionSet || update.docChanged) {
+    const head = update.state.selection.main.head;
+    const line = update.state.doc.lineAt(head);
+    useEditorStore.getState().setCursor({
+      line: line.number, // 1-based
+      column: head - line.from + 1, // 1-based
+    });
+  }
+});
+
 export default function CodeEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null); // this is codemirror's View
@@ -46,6 +58,7 @@ export default function CodeEditor() {
       extensions: [
         basicSetup,
         codeEditorTheme,
+        cursorListener,
         overridenShortcuts,
         indentUnit.of("  "),
         keymap.of([...customKeymap, ...defaultKeymap]),
