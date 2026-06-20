@@ -36,7 +36,13 @@ function MessageBar({ messages }: { messages: Message[] }) {
           {messages.length}{" "}
         </span>
       )}
-      <LevelIcon level={messages[0].type} />{" "}
+      <LevelIcon level={messages[0].level} />{" "}
+      {messages[0].position && (
+        <b className="text-small text-ink">
+          {messages[0].level == "error" && `Error at `}(
+          {messages[0].position.line}, {messages[0].position.column})
+        </b>
+      )}
       <span className="text-ink">{messages[0].message}</span>
     </span>
   );
@@ -46,6 +52,6 @@ export default function MessageDisplay({ messages }: { messages: Message[] }) {
   return messages.length > 0 ? (
     <MessageBar messages={messages} />
   ) : (
-    <MessageBar messages={[{ type: "success", message: "Ready." }]} />
+    <MessageBar messages={[{ level: "success", message: "Ready." }]} />
   );
 }

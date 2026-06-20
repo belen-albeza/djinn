@@ -55,7 +55,7 @@ describe("Global shortcuts", () => {
       });
     });
     expect(useStatusBarStore.getState().messages).toEqual([
-      { type: "success", message: "Built without errors." },
+      { level: "success", message: "Built without errors." },
     ]);
   });
 });

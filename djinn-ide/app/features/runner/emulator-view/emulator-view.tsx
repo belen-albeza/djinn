@@ -57,18 +57,16 @@ export default function EmulatorView({
           console.error(
             `Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`,
           );
-          useStatusBarStore
-            .getState()
-            .setMessages([
-              {
-                type: "error",
-                message: `Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`,
-              },
-            ]);
+          useStatusBarStore.getState().setMessages([
+            {
+              level: "error",
+              position: error.position,
+              message: error.message,
+            },
+          ]);
           useEditorStore.getState().setErrors([
             {
-              line: error.position.line,
-              column: error.position.column,
+              position: error.position,
               message: error.message,
             },
           ]);

@@ -16,7 +16,13 @@ describe("MessageDisplay", () => {
   it("Renders message when there is one", () => {
     const { container } = render(
       <MessageDisplay
-        messages={[{ type: "error", message: "Lorem ipsum dolors" }]}
+        messages={[
+          {
+            level: "error",
+            message: "Lorem ipsum dolors",
+            position: { line: 1, column: 1 },
+          },
+        ]}
       />,
     );
     expect(getByRole(container, "img", { name: "Error" })).toBeVisible();
@@ -27,8 +33,16 @@ describe("MessageDisplay", () => {
     const { container } = render(
       <MessageDisplay
         messages={[
-          { type: "error", message: "Lorem ipsum dolors" },
-          { type: "error", message: "Sit amet" },
+          {
+            level: "error",
+            message: "Lorem ipsum dolors",
+            position: { line: 1, column: 1 },
+          },
+          {
+            level: "error",
+            message: "Sit amet",
+            position: { line: 1, column: 1 },
+          },
         ]}
       />,
     );
@@ -40,7 +54,13 @@ describe("MessageDisplay", () => {
   it("Renders success messages with the correct icon", () => {
     const { container } = render(
       <MessageDisplay
-        messages={[{ type: "success", message: "Lorem ipsum dolors" }]}
+        messages={[
+          {
+            level: "success",
+            message: "Lorem ipsum dolors",
+            position: { line: 1, column: 1 },
+          },
+        ]}
       />,
     );
     expect(getByRole(container, "img", { name: "Success" })).toBeVisible();
@@ -50,7 +70,13 @@ describe("MessageDisplay", () => {
   it("Renders error messages with the correct icon", () => {
     const { container } = render(
       <MessageDisplay
-        messages={[{ type: "error", message: "Lorem ipsum dolors" }]}
+        messages={[
+          {
+            level: "error",
+            message: "Lorem ipsum dolors",
+            position: { line: 1, column: 1 },
+          },
+        ]}
       />,
     );
     expect(getByRole(container, "img", { name: "Error" })).toBeVisible();

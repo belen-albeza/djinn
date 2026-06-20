@@ -1,8 +1,10 @@
+import type { Location } from "djinn-dev-wasm";
 import { create } from "zustand";
 
 export interface Message {
-  type: "error" | "success";
+  level: "error" | "success";
   message: string;
+  position?: Location;
 }
 
 type StatusBarSnapshot = {
