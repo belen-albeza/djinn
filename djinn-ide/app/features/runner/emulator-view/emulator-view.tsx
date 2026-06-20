@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Emulator } from "djinn-dev-wasm";
+import { Emulator, type DjinnError } from "djinn-dev-wasm";
 
 import { Modal } from "~/ui/modal";
 import { cn } from "~/utils/cn";
@@ -27,13 +27,15 @@ export default function EmulatorView({
     const imageData = new ImageData(CANVAS_WIDTH, CANVAS_HEIGHT);
     let animationFrameId: number;
 
+    let error: DjinnError | null = null;
+
     const frame = () => {
       let shallHalt = false;
 
       try {
         shallHalt = emulator.tick();
-      } catch (error) {
-        console.error(error);
+      } catch (err: unknown) {
+        error = err as DjinnError;
         shallHalt = true;
       }
 
@@ -50,11 +52,18 @@ export default function EmulatorView({
       if (!shallHalt) {
         animationFrameId = requestAnimationFrame(frame);
       } else {
-        useStatusBarStore
-          .getState()
-          .setMessages([
-            { type: "success", message: "Emulator halted successfully." },
-          ]);
+        if (error) {
+          console.error(
+            `Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`,
+          );
+          useStatusBarStore
+            .getState()
+            .setMessages([
+              { type: "error", message: `Runtime error: ${error.message}` },
+            ]);
+        } else {
+          useStatusBarStore.getState().setMessages([]);
+        }
       }
     };
 
