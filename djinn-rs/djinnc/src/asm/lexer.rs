@@ -167,6 +167,7 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "mul" => Some(TokenKind::Mul),
         "div" => Some(TokenKind::Div),
         "mod" => Some(TokenKind::Mod),
+        "eq" => Some(TokenKind::Eq),
         _ => None,
     }
 }

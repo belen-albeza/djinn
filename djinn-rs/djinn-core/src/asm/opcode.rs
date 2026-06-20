@@ -20,4 +20,5 @@ pub enum Opcode {
     Mul,
     Div,
     Mod,
+    Eq,
 }
