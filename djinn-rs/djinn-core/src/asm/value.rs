@@ -1,4 +1,5 @@
 use crate::vm::{Result, RuntimeError};
+use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
 
@@ -24,6 +25,17 @@ impl PartialEq for Number {
             (Number::Int(x), Number::Int(y)) => x == y,
             (Number::Float(x), Number::Int(y)) => *x == (*y as f64),
             (Number::Int(x), Number::Float(y)) => (*x as f64) == *y,
+        }
+    }
+}
+
+impl PartialOrd for Number {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (Number::Float(x), Number::Float(y)) => x.partial_cmp(y),
+            (Number::Int(x), Number::Int(y)) => x.partial_cmp(y),
+            (Number::Float(x), Number::Int(y)) => x.partial_cmp(&(*y as f64)),
+            (Number::Int(x), Number::Float(y)) => (*x as f64).partial_cmp(y),
         }
     }
 }

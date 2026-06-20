@@ -48,6 +48,7 @@ impl Cpu {
             Opcode::Mod => self.exec_opcode_rem(),
             Opcode::Eq => self.exec_opcode_eq(),
             Opcode::Neq => self.exec_opcode_neq(),
+            Opcode::Lth => self.exec_opcode_lth(),
         }
     }
 

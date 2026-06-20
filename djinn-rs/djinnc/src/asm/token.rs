@@ -32,6 +32,7 @@ pub enum TokenKind {
     Mod,
     Eq,
     Neq,
+    Lth,
     // Control
     Eof,
 }
