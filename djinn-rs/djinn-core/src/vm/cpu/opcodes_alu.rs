@@ -67,6 +67,18 @@ impl Cpu {
         Ok(false)
     }
 
+    pub fn exec_opcode_inc(&mut self) -> Result<bool> {
+        let value: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Numeric(value + Number::Int(1)));
+        Ok(false)
+    }
+
+    pub fn exec_opcode_dec(&mut self) -> Result<bool> {
+        let value: Number = self.stack.pop()?.try_into()?;
+        self.stack.push(Value::Numeric(value - Number::Int(1)));
+        Ok(false)
+    }
+
     pub fn exec_opcode_eq(&mut self) -> Result<bool> {
         let b = self.stack.pop()?;
         let a = self.stack.pop()?;
@@ -252,6 +264,22 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         cpu.stack.push(Value::Numeric(Number::Int(0)));
         assert_eq!(cpu.exec_opcode_rem(), Err(RuntimeError::DivisionByZero));
+    }
+
+    #[test]
+    fn test_inc_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(cpu.exec_opcode_inc(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(2))));
+    }
+
+    #[test]
+    fn test_dec_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(cpu.exec_opcode_dec(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(0))));
     }
 
     #[test]

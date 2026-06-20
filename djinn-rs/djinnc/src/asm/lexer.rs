@@ -173,6 +173,8 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "leq" => Some(TokenKind::Leq),
         "gt" => Some(TokenKind::Gt),
         "geq" => Some(TokenKind::Geq),
+        "inc" => Some(TokenKind::Inc),
+        "dec" => Some(TokenKind::Dec),
         _ => None,
     }
 }
@@ -250,6 +252,8 @@ yld ;actual opcode
             ("mul", TokenKind::Mul),
             ("div", TokenKind::Div),
             ("mod", TokenKind::Mod),
+            ("inc", TokenKind::Inc),
+            ("dec", TokenKind::Dec),
             ("eq", TokenKind::Eq),
             ("neq", TokenKind::Neq),
             ("lt", TokenKind::Lt),

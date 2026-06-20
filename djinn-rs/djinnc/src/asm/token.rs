@@ -30,6 +30,8 @@ pub enum TokenKind {
     Mul,
     Div,
     Mod,
+    Inc,
+    Dec,
     Eq,
     Neq,
     Lt,
