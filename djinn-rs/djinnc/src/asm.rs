@@ -7,11 +7,11 @@ mod parser;
 mod token;
 
 use analyzer::Analyzer;
-use djinn_core::asm::{Opcode, ProcessType};
+use djinn_core::asm::{Opcode, ProcessDefinition, ProcessType};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;
-use parser::Parser;
+use parser::{Parser, ProcessNode};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
@@ -31,30 +31,42 @@ impl Default for Location {
     }
 }
 
-pub fn compile(source_code: &str) -> Result<Rom> {
-    let mut lexer = Lexer::new(source_code);
-    let mut parser = Parser::new();
-    let mut analyzer = Analyzer::new();
-
-    // TODO: parse all processes instead
-    if let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
-        analyzer.check_main_process_exists()?;
-        Ok(Rom::new(
+impl From<ProcessNode> for ProcessDefinition {
+    fn from(process: ProcessNode) -> Self {
+        ProcessDefinition::new(
+            process.process_type,
             process
                 .instructions
                 .into_iter()
                 .map(|statement| statement.raw_opcode)
                 .collect(),
-        ))
-    } else {
-        Err(AssemblerError::MainProcessNotFound(
-            lexer.current_location(),
-        ))
+        )
     }
+}
+
+pub fn compile(source_code: &str) -> Result<Rom> {
+    let mut lexer = Lexer::new(source_code);
+    let mut parser = Parser::new();
+    let mut analyzer = Analyzer::new();
+
+    let mut processes: Vec<ProcessNode> = vec![];
+
+    while let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
+        processes.push(process);
+    }
+    analyzer.check_main_process_exists(lexer.current_location())?;
+
+    let rom = processes
+        .into_iter()
+        .map(|process| (process.process_type, process.into()))
+        .collect();
+    Ok(Rom::new(rom))
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
 
     #[test]
@@ -66,6 +78,28 @@ mod tests {
                 line: 1,
                 column: 1
             }))
+        );
+    }
+
+    #[test]
+    fn test_returns_rom_with_all_processes() {
+        let res = compile("~foo:\nnoop\n~main:\nnoop\n~bar:\nnoop");
+        assert_eq!(
+            res,
+            Ok(Rom::new(HashMap::from([
+                (
+                    ProcessType(2),
+                    ProcessDefinition::new(ProcessType(2), vec![Opcode::NoOp])
+                ),
+                (
+                    ProcessType(1),
+                    ProcessDefinition::new(ProcessType(1), vec![Opcode::NoOp])
+                ),
+                (
+                    ProcessType(3),
+                    ProcessDefinition::new(ProcessType(3), vec![Opcode::NoOp])
+                ),
+            ])))
         );
     }
 }

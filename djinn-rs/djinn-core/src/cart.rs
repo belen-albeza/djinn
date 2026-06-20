@@ -1,20 +1,23 @@
-use crate::asm::Opcode;
+use std::collections::HashMap;
+
+use crate::asm::{Opcode, ProcessDefinition, ProcessType};
 use crate::vm::InstructionProvider;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rom {
-    instructions: Vec<Opcode>,
+    processes: HashMap<ProcessType, ProcessDefinition>,
 }
 
 impl Rom {
-    pub fn new(instructions: Vec<Opcode>) -> Self {
-        Self { instructions }
+    pub fn new(processes: HashMap<ProcessType, ProcessDefinition>) -> Self {
+        Self { processes }
     }
 }
 
 impl InstructionProvider for Rom {
     fn instructions(&self) -> &[Opcode] {
-        &self.instructions
+        // TODO: return instructions for given process type
+        self.processes.get(&ProcessType(0)).unwrap().instructions()
     }
 }
 
