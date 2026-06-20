@@ -17,7 +17,7 @@ impl Cpu {
             }
             _ => {
                 return Err(RuntimeError::TypeError(format!(
-                    "NOT opcode not supported for value: {:?}",
+                    "NOT opcode not supported for value: `{}`",
                     value
                 )));
             }
