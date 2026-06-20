@@ -83,17 +83,21 @@ mod tests {
 
     #[test]
     fn test_returns_rom_with_all_processes() {
-        let res = compile("~main:\nnoop\n~secondary:\nnoop");
+        let res = compile("~foo:\nnoop\n~main:\nnoop\n~bar:\nnoop");
         assert_eq!(
             res,
             Ok(Rom::new(HashMap::from([
+                (
+                    ProcessType(2),
+                    ProcessDefinition::new(ProcessType(2), vec![Opcode::NoOp])
+                ),
                 (
                     ProcessType(1),
                     ProcessDefinition::new(ProcessType(1), vec![Opcode::NoOp])
                 ),
                 (
-                    ProcessType(2),
-                    ProcessDefinition::new(ProcessType(2), vec![Opcode::NoOp])
+                    ProcessType(3),
+                    ProcessDefinition::new(ProcessType(3), vec![Opcode::NoOp])
                 ),
             ])))
         );

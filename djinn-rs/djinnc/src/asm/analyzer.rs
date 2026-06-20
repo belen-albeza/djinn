@@ -28,11 +28,7 @@ impl Analyzer {
             ));
         }
 
-        let process_type = if name == "main" {
-            ProcessType(1)
-        } else {
-            ProcessType(2)
-        };
+        let process_type = self.process_type_for(name);
 
         let metadata = ProcessMetadata {
             location,
@@ -48,5 +44,17 @@ impl Analyzer {
             return Err(AssemblerError::MainProcessNotFound(location));
         }
         Ok(())
+    }
+
+    fn process_type_for(&self, name: &str) -> ProcessType {
+        if name == "main" {
+            ProcessType(1)
+        } else {
+            if self.processes.contains_key("main") {
+                ProcessType((self.processes.len() + 1) as u32)
+            } else {
+                ProcessType((self.processes.len() + 2) as u32)
+            }
+        }
     }
 }
