@@ -1,5 +1,5 @@
-use crate::asm::Opcode;
-use crate::vm::Result;
+use crate::asm::{Instruction, Location, Opcode, Value};
+use crate::vm::{Result, RuntimeError};
 
 mod stack;
 use stack::Stack;
@@ -8,6 +8,7 @@ mod opcodes_alu;
 pub struct Cpu {
     pc: usize,
     stack: Stack,
+    current_location: Location,
 }
 
 impl Cpu {
@@ -15,11 +16,15 @@ impl Cpu {
         Self {
             pc: 0,
             stack: Stack::default(),
+            current_location: Location::default(),
         }
     }
 
     /// Executes an opcode and returns whether the process has yielded.
-    pub fn exec_opcode(&mut self, opcode: Opcode) -> Result<bool> {
+    pub fn exec_opcode(&mut self, instruction: Instruction) -> Result<bool> {
+        let Instruction { opcode, location } = instruction;
+        self.current_location = location;
+
         match opcode {
             Opcode::NoOp => Ok(false),
             Opcode::Yield => Ok(true),
@@ -28,11 +33,11 @@ impl Cpu {
                 Ok(false)
             }
             Opcode::Pop => {
-                self.stack.pop()?;
+                self.pop_stack()?;
                 Ok(false)
             }
             Opcode::Dup => {
-                let value = self.stack.pop()?;
+                let value = self.pop_stack()?;
                 self.stack.push(value);
                 self.stack.push(value);
                 Ok(false)
@@ -58,10 +63,18 @@ impl Cpu {
     }
 
     /// Reads the next opcode from the instruction slice.
-    pub fn read_opcode(&mut self, instructions: &[Opcode]) -> Option<Opcode> {
-        let opcode = instructions.get(self.pc)?;
+    pub fn read_opcode(&mut self, instructions: &[Instruction]) -> Option<Instruction> {
+        let instruction = instructions.get(self.pc)?;
         self.pc += 1;
-        Some(*opcode)
+        Some(*instruction)
+    }
+
+    fn pop_stack(&mut self) -> Result<Value> {
+        let value = self
+            .stack
+            .pop()
+            .ok_or(RuntimeError::StackUnderflow(self.current_location))?;
+        Ok(value)
     }
 }
 
@@ -74,32 +87,36 @@ impl Default for Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{Number, Value};
+    use crate::asm::{Location, Number, Value};
 
     fn any_cpu() -> Cpu {
         Cpu::default()
     }
 
+    fn opcode(opcode: Opcode) -> Instruction {
+        Instruction::new(opcode, Location::default())
+    }
+
     #[test]
     fn test_yield_opcode() {
         let mut cpu = any_cpu();
-        assert_eq!(cpu.exec_opcode(Opcode::Yield), Ok(true));
+        assert_eq!(cpu.exec_opcode(opcode(Opcode::Yield)), Ok(true));
     }
 
     #[test]
     fn test_noop_opcode() {
         let mut cpu = any_cpu();
-        assert_eq!(cpu.exec_opcode(Opcode::NoOp), Ok(false));
+        assert_eq!(cpu.exec_opcode(opcode(Opcode::NoOp)), Ok(false));
     }
 
     #[test]
     fn test_push_opcode() {
         let mut cpu = any_cpu();
         assert_eq!(
-            cpu.exec_opcode(Opcode::Push(Value::Numeric(Number::Int(1)))),
+            cpu.exec_opcode(opcode(Opcode::Push(Value::Numeric(Number::Int(1))))),
             Ok(false)
         );
-        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(1))));
+        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
     }
 
     #[test]
@@ -107,7 +124,7 @@ mod tests {
         let mut cpu = any_cpu();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
-        assert_eq!(cpu.exec_opcode(Opcode::Pop), Ok(false));
+        assert_eq!(cpu.exec_opcode(opcode(Opcode::Pop)), Ok(false));
         assert!(cpu.stack.is_empty());
     }
 
@@ -116,8 +133,8 @@ mod tests {
         let mut cpu = any_cpu();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
-        assert_eq!(cpu.exec_opcode(Opcode::Dup), Ok(false));
-        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(1))));
-        assert_eq!(cpu.stack.pop(), Ok(Value::Numeric(Number::Int(1))));
+        assert_eq!(cpu.exec_opcode(opcode(Opcode::Dup)), Ok(false));
+        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
+        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
     }
 }

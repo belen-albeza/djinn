@@ -28,8 +28,14 @@ export default function EmulatorView({
     let animationFrameId: number;
 
     const frame = () => {
-      const shallHalt = emulator.tick();
-      console.log(`frame (${animationFrameId}) -> shallhalt? ${shallHalt}`);
+      let shallHalt = false;
+
+      try {
+        shallHalt = emulator.tick();
+      } catch (error) {
+        console.error(error);
+        shallHalt = true;
+      }
 
       const sharedBuffer = new Uint8Array(
         Emulator.memory.buffer,

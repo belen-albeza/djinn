@@ -66,8 +66,7 @@ impl Emulator {
         let shall_halt = self
             .vm
             .tick()
-            // TODO: relate error position to the source code
-            .map_err(|e| DjinnError::with_message(e.to_string()))?;
+            .map_err(|e| DjinnError::new(e.location().into(), e.to_string()))?;
         self.update_display_buffer();
 
         Ok(shall_halt)

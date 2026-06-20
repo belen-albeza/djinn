@@ -1,7 +1,7 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Opcode, ProcessId, ProcessType};
+use crate::asm::{Instruction, Location, ProcessId, ProcessType};
 use process::{Process, Status};
 
 #[derive(Debug, thiserror::Error, PartialEq)]
@@ -9,11 +9,22 @@ pub enum RuntimeError {
     #[error("Invalid ROM")]
     LoadRomError,
     #[error("Stack underflow")]
-    StackUnderflow,
+    StackUnderflow(Location),
     #[error("Type error: {0}")]
     TypeError(String),
     #[error("Division by zero")]
     DivisionByZero,
+}
+
+impl RuntimeError {
+    pub fn location(&self) -> Location {
+        match self {
+            RuntimeError::StackUnderflow(location) => *location,
+            RuntimeError::TypeError(_) => Location::default(),
+            RuntimeError::DivisionByZero => Location::default(),
+            RuntimeError::LoadRomError => Location::default(),
+        }
+    }
 }
 
 pub type Result<T> = std::result::Result<T, RuntimeError>;
@@ -23,7 +34,7 @@ pub trait Devices {
 }
 
 pub trait InstructionProvider {
-    fn instructions(&self) -> &[Opcode];
+    fn instructions(&self) -> &[Instruction];
 }
 
 pub struct Machine<D: Devices, R: InstructionProvider> {
