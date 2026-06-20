@@ -11,7 +11,7 @@ use djinn_core::asm::{Opcode, ProcessType};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;
-use parser::Parser;
+use parser::{Parser, ProcessNode};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {
@@ -36,21 +36,22 @@ pub fn compile(source_code: &str) -> Result<Rom> {
     let mut parser = Parser::new();
     let mut analyzer = Analyzer::new();
 
-    // TODO: parse all processes instead
-    if let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
-        analyzer.check_main_process_exists()?;
-        Ok(Rom::new(
-            process
-                .instructions
-                .into_iter()
-                .map(|statement| statement.raw_opcode)
-                .collect(),
-        ))
-    } else {
-        Err(AssemblerError::MainProcessNotFound(
-            lexer.current_location(),
-        ))
+    let mut processes: Vec<ProcessNode> = vec![];
+
+    while let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
+        processes.push(process);
     }
+    analyzer.check_main_process_exists(lexer.current_location())?;
+
+    // TODO: add all processes to the ROM
+    let rom = processes[0]
+        .clone()
+        .instructions
+        .into_iter()
+        .map(|statement| statement.raw_opcode)
+        .collect();
+
+    Ok(Rom::new(rom))
 }
 
 #[cfg(test)]

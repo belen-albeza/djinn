@@ -43,10 +43,10 @@ impl Analyzer {
         Ok(process_type)
     }
 
-    pub fn check_main_process_exists(&self) -> Result<()> {
-        self.processes
-            .get("main")
-            .ok_or_else(|| AssemblerError::MainProcessNotFound(Location::default()))?;
+    pub fn check_main_process_exists(&self, location: Location) -> Result<()> {
+        if !self.processes.contains_key("main") {
+            return Err(AssemblerError::MainProcessNotFound(location));
+        }
         Ok(())
     }
 }
