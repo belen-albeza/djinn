@@ -2,7 +2,7 @@ use std::ops::{Div, Rem};
 
 use super::Cpu;
 use crate::asm::{Number, Value};
-use crate::vm::Result;
+use crate::vm::{Result, RuntimeError};
 
 impl Cpu {
     pub fn exec_opcode_not(&mut self) -> Result<bool> {
@@ -33,48 +33,91 @@ impl Cpu {
     }
 
     pub fn exec_opcode_add(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Numeric(a + b));
         Ok(false)
     }
 
     pub fn exec_opcode_sub(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Numeric(a - b));
         Ok(false)
     }
 
     pub fn exec_opcode_mul(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Numeric(a * b));
         Ok(false)
     }
 
     pub fn exec_opcode_div(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
-        self.stack.push(Value::Numeric(a.div(b)?));
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+
+        let result = a
+            .div(b)
+            .map_err(|e| e.with_location(self.current_location))?;
+        self.stack.push(Value::Numeric(result));
         Ok(false)
     }
 
     pub fn exec_opcode_rem(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
-        self.stack.push(Value::Numeric(a.rem(b)?));
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let result = a
+            .rem(b)
+            .map_err(|e| e.with_location(self.current_location))?;
+        self.stack.push(Value::Numeric(result));
         Ok(false)
     }
 
     pub fn exec_opcode_inc(&mut self) -> Result<bool> {
-        let value: Number = self.pop_stack()?.try_into()?;
+        let value: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Numeric(value + Number::Int(1)));
         Ok(false)
     }
 
     pub fn exec_opcode_dec(&mut self) -> Result<bool> {
-        let value: Number = self.pop_stack()?.try_into()?;
+        let value: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Numeric(value - Number::Int(1)));
         Ok(false)
     }
@@ -94,29 +137,53 @@ impl Cpu {
     }
 
     pub fn exec_opcode_lt(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Bool(a < b));
         Ok(false)
     }
 
     pub fn exec_opcode_leq(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Bool(a <= b));
         Ok(false)
     }
 
     pub fn exec_opcode_gt(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Bool(a > b));
         Ok(false)
     }
 
     pub fn exec_opcode_geq(&mut self) -> Result<bool> {
-        let b: Number = self.pop_stack()?.try_into()?;
-        let a: Number = self.pop_stack()?.try_into()?;
+        let b: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+        let a: Number = self
+            .pop_stack()?
+            .try_into()
+            .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
         self.stack.push(Value::Bool(a >= b));
         Ok(false)
     }
@@ -212,6 +279,7 @@ mod tests {
         assert_eq!(
             cpu.exec_opcode_add(),
             Err(RuntimeError::TypeError(
+                Location::default(),
                 "`true` is not a number".to_string()
             ))
         );
@@ -249,7 +317,10 @@ mod tests {
         let mut cpu = Cpu::new();
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         cpu.stack.push(Value::Numeric(Number::Int(0)));
-        assert_eq!(cpu.exec_opcode_div(), Err(RuntimeError::DivisionByZero));
+        assert_eq!(
+            cpu.exec_opcode_div(),
+            Err(RuntimeError::DivisionByZero(Location::default()))
+        );
     }
 
     #[test]
@@ -266,7 +337,10 @@ mod tests {
         let mut cpu = Cpu::new();
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         cpu.stack.push(Value::Numeric(Number::Int(0)));
-        assert_eq!(cpu.exec_opcode_rem(), Err(RuntimeError::DivisionByZero));
+        assert_eq!(
+            cpu.exec_opcode_rem(),
+            Err(RuntimeError::DivisionByZero(Location::default()))
+        );
     }
 
     #[test]
