@@ -60,7 +60,10 @@ export default function EmulatorView({
           useStatusBarStore
             .getState()
             .setMessages([
-              { type: "error", message: `Runtime error: ${error.message}` },
+              {
+                type: "error",
+                message: `Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`,
+              },
             ]);
           useEditorStore.getState().setErrors([
             {
@@ -72,6 +75,9 @@ export default function EmulatorView({
         } else {
           useStatusBarStore.getState().setMessages([]);
         }
+
+        // close the modal
+        onClose();
       }
     };
 
