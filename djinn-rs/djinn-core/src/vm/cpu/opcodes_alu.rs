@@ -73,6 +73,13 @@ impl Cpu {
         self.stack.push(Value::Bool(a == b));
         Ok(false)
     }
+
+    pub fn exec_opcode_neq(&mut self) -> Result<bool> {
+        let b = self.stack.pop()?;
+        let a = self.stack.pop()?;
+        self.stack.push(Value::Bool(a != b));
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -229,7 +236,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eq_opcode_with_mixed_values() {
+    fn test_eq_opcode_with_mixed_types() {
         let mut cpu = Cpu::new();
         cpu.stack.push(Value::Bool(true));
         cpu.stack.push(Value::Numeric(Number::Int(1)));
@@ -244,5 +251,14 @@ mod tests {
         cpu.stack.push(Value::Numeric(Number::Float(1.0)));
         assert_eq!(cpu.exec_opcode_eq(), Ok(false));
         assert_eq!(cpu.stack.pop(), Ok(Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_neq_opcode() {
+        let mut cpu = Cpu::new();
+        cpu.stack.push(Value::Bool(true));
+        cpu.stack.push(Value::Bool(true));
+        assert_eq!(cpu.exec_opcode_neq(), Ok(false));
+        assert_eq!(cpu.stack.pop(), Ok(Value::Bool(false)));
     }
 }
