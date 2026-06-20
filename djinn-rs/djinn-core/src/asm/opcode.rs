@@ -10,4 +10,9 @@ pub enum Opcode {
     Push(Value),
     Pop,
     Dup,
+    // ALU
+    Not,
+    And,
+    Or,
+    Xor,
 }

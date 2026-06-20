@@ -3,6 +3,7 @@ use crate::vm::Result;
 
 mod stack;
 use stack::Stack;
+mod opcodes_alu;
 
 pub struct Cpu {
     pc: usize,
@@ -36,6 +37,10 @@ impl Cpu {
                 self.stack.push(value);
                 Ok(false)
             }
+            Opcode::Not => self.exec_opcode_not(),
+            Opcode::And => self.exec_opcode_and(),
+            Opcode::Or => self.exec_opcode_or(),
+            Opcode::Xor => self.exec_opcode_xor(),
         }
     }
 
