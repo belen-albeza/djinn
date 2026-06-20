@@ -18,7 +18,13 @@ pub enum TokenKind {
 
 impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            TokenKind::Colon => write!(f, ":"),
+            TokenKind::Tilde => write!(f, "~"),
+            TokenKind::Id => write!(f, "Identifier"),
+            TokenKind::Yield => write!(f, "YLD"),
+            _ => write!(f, "{}", format!("{self:?}").to_ascii_uppercase()),
+        }
     }
 }
 
