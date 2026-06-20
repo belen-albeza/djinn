@@ -17,9 +17,9 @@ fn unexpected_token_expecting(expected: &[TokenKind]) -> String {
 
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum AssemblerError {
-    #[error("Unexpected character at {0}: {1}.")]
+    #[error("Unexpected character: {1}.")]
     UnexpectedCharacter(Location, char),
-    #[error("Unexpected token at {location}: `{token}`.{}", unexpected_token_expecting(.expected))]
+    #[error("Unexpected token: `{token}`.{}", unexpected_token_expecting(.expected))]
     UnexpectedToken {
         location: Location,
         token: String,
@@ -27,7 +27,7 @@ pub enum AssemblerError {
     },
     #[error("Main process not found.")]
     MainProcessNotFound(Location),
-    #[error("Already defined process at {0}: {1}.")]
+    #[error("Process already defined: {1}.")]
     ProcessAlreadyDefined(Location, String),
 }
 
@@ -61,7 +61,7 @@ mod tests {
         };
         assert_eq!(
             err.message(),
-            "Unexpected token at Ln 1, Col 1: `foo`. Expecting any opcode."
+            "Unexpected token: `foo`. Expecting any opcode."
         );
     }
 
@@ -74,7 +74,7 @@ mod tests {
         };
         assert_eq!(
             err.message(),
-            "Unexpected token at Ln 2, Col 3: `bar`. Expecting: `NOOP`, `YLD`."
+            "Unexpected token: `bar`. Expecting: `NOOP`, `YLD`."
         );
     }
 }

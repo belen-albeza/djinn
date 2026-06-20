@@ -38,16 +38,16 @@ export function buildProject() {
   let messages: Message[] =
     errors.length > 0
       ? errors.map((e) => ({
-          type: "error",
-          message: `Error at Ln ${e.position.line}, Col ${e.position.column}: ${e.message}`,
+          level: "error",
+          message: e.message,
+          position: e.position,
         }))
-      : [{ type: "success", message: "Built without errors." }];
+      : [{ level: "success", message: "Built without errors." }];
 
   useStatusBarStore.getState().setMessages(messages);
   useEditorStore.getState().setErrors(
     errors.map((e) => ({
-      line: e.position.line,
-      column: e.position.column,
+      position: e.position,
       message: e.message,
     })),
   );

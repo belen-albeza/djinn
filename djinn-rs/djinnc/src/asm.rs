@@ -1,5 +1,3 @@
-use std::fmt;
-
 mod analyzer;
 mod error;
 mod lexer;
@@ -7,29 +5,13 @@ mod parser;
 mod token;
 
 use analyzer::Analyzer;
-use djinn_core::asm::{Number, Opcode, ProcessDefinition, ProcessType, Value};
+use djinn_core::asm::{
+    Instruction, Location, Number, Opcode, ProcessDefinition, ProcessType, Value,
+};
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
 use lexer::Lexer;
 use parser::{Parser, ProcessNode};
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Location {
-    pub line: usize,
-    pub column: usize,
-}
-
-impl fmt::Display for Location {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Ln {}, Col {}", self.line, self.column)
-    }
-}
-
-impl Default for Location {
-    fn default() -> Self {
-        Self { line: 1, column: 1 }
-    }
-}
 
 impl From<ProcessNode> for ProcessDefinition {
     fn from(process: ProcessNode) -> Self {
@@ -38,7 +20,7 @@ impl From<ProcessNode> for ProcessDefinition {
             process
                 .instructions
                 .into_iter()
-                .map(|statement| statement.raw_opcode)
+                .map(|statement| Instruction::new(statement.raw_opcode, statement.location))
                 .collect(),
         )
     }
@@ -65,9 +47,8 @@ pub fn compile(source_code: &str) -> Result<Rom> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_returns_no_main_process_error() {
@@ -89,15 +70,33 @@ mod tests {
             Ok(Rom::new(HashMap::from([
                 (
                     ProcessType(2),
-                    ProcessDefinition::new(ProcessType(2), vec![Opcode::NoOp])
+                    ProcessDefinition::new(
+                        ProcessType(2),
+                        vec![Instruction::new(
+                            Opcode::NoOp,
+                            Location { line: 2, column: 1 }
+                        ),]
+                    )
                 ),
                 (
                     ProcessType(1),
-                    ProcessDefinition::new(ProcessType(1), vec![Opcode::NoOp])
+                    ProcessDefinition::new(
+                        ProcessType(1),
+                        vec![Instruction::new(
+                            Opcode::NoOp,
+                            Location { line: 4, column: 1 }
+                        )]
+                    )
                 ),
                 (
                     ProcessType(3),
-                    ProcessDefinition::new(ProcessType(3), vec![Opcode::NoOp])
+                    ProcessDefinition::new(
+                        ProcessType(3),
+                        vec![Instruction::new(
+                            Opcode::NoOp,
+                            Location { line: 6, column: 1 }
+                        )]
+                    )
                 ),
             ])))
         );

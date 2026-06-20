@@ -1,3 +1,4 @@
+use crate::asm::Location;
 use crate::vm::{Result, RuntimeError};
 use std::cmp::Ordering;
 use std::fmt;
@@ -80,7 +81,7 @@ impl ops::Div for Number {
     type Output = Result<Self>;
     fn div(self, other: Self) -> Self::Output {
         if other.is_zero() {
-            return Err(RuntimeError::DivisionByZero);
+            return Err(RuntimeError::DivisionByZero(Location::default()));
         }
         match (self, other) {
             (Number::Float(x), Number::Float(y)) => Ok(Number::Float(x / y)),
@@ -95,7 +96,7 @@ impl ops::Rem for Number {
     type Output = Result<Self>;
     fn rem(self, other: Self) -> Self::Output {
         if other.is_zero() {
-            return Err(RuntimeError::DivisionByZero);
+            return Err(RuntimeError::DivisionByZero(Location::default()));
         }
         match (self, other) {
             (Number::Float(x), Number::Float(y)) => Ok(Number::Float(x.rem_euclid(y))),
@@ -163,10 +164,10 @@ impl TryFrom<Value> for Number {
     fn try_from(value: Value) -> Result<Self> {
         match value {
             Value::Numeric(number) => Ok(number),
-            Value::Bool(_) => Err(RuntimeError::TypeError(format!(
-                "`{}` is not a number",
-                value
-            ))),
+            Value::Bool(_) => Err(RuntimeError::TypeError(
+                Location::default(),
+                format!("`{}` is not a number", value),
+            )),
         }
     }
 }

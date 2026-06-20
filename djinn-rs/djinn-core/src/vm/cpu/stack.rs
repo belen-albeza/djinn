@@ -1,5 +1,4 @@
 use crate::asm::Value;
-use crate::vm::{Result, RuntimeError};
 
 pub struct Stack {
     items: Vec<Value>,
@@ -14,8 +13,8 @@ impl Stack {
         self.items.push(value);
     }
 
-    pub fn pop(&mut self) -> Result<Value> {
-        self.items.pop().ok_or(RuntimeError::StackUnderflow)
+    pub fn pop(&mut self) -> Option<Value> {
+        self.items.pop()
     }
 
     #[cfg(test)]

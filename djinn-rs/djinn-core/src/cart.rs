@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::asm::{Opcode, ProcessDefinition, ProcessType};
+use crate::asm::{Instruction, ProcessDefinition, ProcessType};
 use crate::vm::InstructionProvider;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,7 +15,7 @@ impl Rom {
 }
 
 impl InstructionProvider for Rom {
-    fn instructions(&self) -> &[Opcode] {
+    fn instructions(&self) -> &[Instruction] {
         // TODO: return instructions for given process type
         self.processes.get(&ProcessType(1)).unwrap().instructions()
     }

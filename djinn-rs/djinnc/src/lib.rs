@@ -1,6 +1,7 @@
 mod asm;
 
-pub use asm::{AssemblerError, Location};
+pub use asm::AssemblerError;
+pub use djinn_core::asm::Location;
 pub use djinn_core::cart::Cartridge;
 
 pub fn bundle(title: &str, source_code: &str) -> Result<Cartridge, AssemblerError> {

@@ -1,3 +1,4 @@
+import type { Location } from "djinn-dev-wasm";
 import { StateField, StateEffect, RangeSet, Prec } from "@codemirror/state";
 import {
   Decoration,
@@ -12,8 +13,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 export interface CodeError {
-  line: number; // 1-based, as compilers report
-  column: number; // 1-based (used for the tooltip / future caret)
+  position: Location;
   message: string;
 }
 
@@ -65,8 +65,9 @@ const errorField = StateField.define<ErrorState>({
         const lineDecos = [];
         const gutterMarks = [];
         for (const err of effect.value) {
-          if (err.line < 1 || err.line > tr.state.doc.lines) continue;
-          const from = tr.state.doc.line(err.line).from;
+          if (err.position.line < 1 || err.position.line > tr.state.doc.lines)
+            continue;
+          const from = tr.state.doc.line(err.position.line).from;
           lineDecos.push(errorLineDeco.range(from));
           gutterMarks.push(errorGutterMarker.range(from));
         }

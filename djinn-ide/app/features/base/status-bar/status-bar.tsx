@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FloppyDiskIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import { FloppyDiskIcon } from "@phosphor-icons/react";
 
 import { useStatusBarStore } from "./status.store";
 import MessageDisplay from "./message-display";

@@ -1,6 +1,6 @@
 use super::Result;
 use super::cpu::Cpu;
-use crate::asm::{Opcode, ProcessId, ProcessType};
+use crate::asm::{Instruction, ProcessId, ProcessType};
 
 use std::fmt;
 
@@ -38,9 +38,9 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick(&mut self, instructions: &[Opcode]) -> Result<()> {
-        while let Some(opcode) = self.cpu.read_opcode(instructions) {
-            let yielded = self.cpu.exec_opcode(opcode)?;
+    pub fn tick(&mut self, instructions: &[Instruction]) -> Result<()> {
+        while let Some(instruction) = self.cpu.read_opcode(instructions) {
+            let yielded = self.cpu.exec_opcode(instruction)?;
             if yielded {
                 return Ok(());
             }
