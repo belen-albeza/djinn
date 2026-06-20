@@ -1,16 +1,13 @@
+mod opcode;
+mod value;
+pub use opcode::Opcode;
+pub use value::{Number, Value};
+
 #[derive(Debug, Clone, Copy, PartialEq, Default, Eq, Hash)]
 pub struct ProcessType(pub u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ProcessId(pub u32);
-
-#[derive(Debug, Clone, Copy, PartialEq, Default, Eq, Hash)]
-pub enum Opcode {
-    #[default]
-    NoOp,
-    // Process control
-    Yield,
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProcessDefinition {
@@ -33,16 +30,4 @@ impl ProcessDefinition {
     pub fn instructions(&self) -> &[Opcode] {
         &self.instructions
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Number {
-    Float(f64),
-    Int(i32),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    Numeric(Number),
-    Bool(bool),
 }

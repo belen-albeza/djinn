@@ -22,6 +22,7 @@ impl Cpu {
         match opcode {
             Opcode::NoOp => Ok(false),
             Opcode::Yield => Ok(true),
+            _ => unimplemented!("opcode: {opcode:?}"),
         }
     }
 
