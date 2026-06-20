@@ -59,7 +59,9 @@ impl<'a> Lexer<'a> {
                 // one-char tokens
                 ':' => TokenKind::Colon,
                 '~' => TokenKind::Tilde,
+                '#' => TokenKind::Hash,
                 // multi-char tokens
+                _ if x.is_ascii_digit() || x == '-' => self.scan_number_literal()?,
                 _ if x.is_alphabetic() => self.scan_identifier_or_opcode()?,
                 _ => {
                     return Err(AssemblerError::UnexpectedCharacter(self.start_location, x));
@@ -118,12 +120,43 @@ impl<'a> Lexer<'a> {
         let kind = opcode_for_lexeme(&self.buffer).unwrap_or(TokenKind::Id);
         Ok(kind)
     }
+
+    fn scan_number_literal(&mut self) -> Result<TokenKind> {
+        let mut has_decimal = false;
+
+        while let Some(x) = self.source.peek() {
+            match x {
+                '.' if !has_decimal => {
+                    has_decimal = true;
+                    self.advance();
+                }
+                _ if x.is_ascii_digit() => {
+                    self.advance();
+                }
+                _ => break,
+            }
+        }
+
+        if has_decimal {
+            Ok(TokenKind::Float(self.buffer.parse::<f64>().unwrap()))
+        } else {
+            Ok(TokenKind::Int(self.buffer.parse::<i32>().unwrap()))
+        }
+    }
 }
 
 fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
     match lexeme {
+        // process control
         "noop" => Some(TokenKind::NoOp),
         "yld" => Some(TokenKind::Yield),
+        // stack
+        "push" => Some(TokenKind::Push),
+        "pop" => Some(TokenKind::Pop),
+        "dup" => Some(TokenKind::Dup),
+        // values
+        "true" => Some(TokenKind::Bool(true)),
+        "false" => Some(TokenKind::Bool(false)),
         _ => None,
     }
 }
@@ -186,10 +219,18 @@ yld ;actual opcode
 
     #[test]
     fn test_scan_opcodes() {
-        let mut lexer = Lexer::new("noop yld");
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::NoOp);
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Yield);
-        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
+        let opcodes = vec![
+            ("noop", TokenKind::NoOp),
+            ("yld", TokenKind::Yield),
+            ("push", TokenKind::Push),
+            ("pop", TokenKind::Pop),
+            ("dup", TokenKind::Dup),
+        ];
+
+        for (lexeme, kind) in opcodes {
+            let mut lexer = Lexer::new(lexeme);
+            assert_eq!(lexer.scan_token().unwrap().kind, kind);
+        }
     }
 
     #[test]
@@ -199,6 +240,32 @@ yld ;actual opcode
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Id);
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Colon);
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Eof);
+    }
+
+    #[test]
+    fn test_scan_number_literal() {
+        let mut lexer = Lexer::new("123");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Int(123));
+        let mut lexer = Lexer::new("123.456");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Float(123.456));
+        let mut lexer = Lexer::new("-123");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Int(-123));
+        let mut lexer = Lexer::new("-123.456");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Float(-123.456));
+    }
+
+    #[test]
+    fn test_scan_boolean_literal() {
+        let mut lexer = Lexer::new("true");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Bool(true));
+        let mut lexer = Lexer::new("false");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Bool(false));
+    }
+
+    #[test]
+    fn test_scan_hash() {
+        let mut lexer = Lexer::new("#");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Hash);
     }
 
     #[test]

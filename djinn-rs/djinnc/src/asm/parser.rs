@@ -1,7 +1,7 @@
 use crate::asm::analyzer::Analyzer;
 use crate::asm::lexer::Lexer;
 use crate::asm::token::{Token, TokenKind};
-use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result};
+use crate::asm::{AssemblerError, Location, Number, Opcode, ProcessType, Result, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StatementNode {
@@ -67,7 +67,7 @@ impl Parser {
             return Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,
-                expected: expected.iter().map(|k| k.to_string()).collect(),
+                expected: expected.to_vec(),
             });
         }
         Ok(token)
@@ -87,6 +87,27 @@ impl Parser {
             return Ok(Some(token));
         }
         Ok(None)
+    }
+
+    fn consume_value(&mut self, lexer: &mut Lexer) -> Result<Value> {
+        let token = lexer.scan_token()?;
+        let value = match token.kind {
+            TokenKind::Int(value) => Value::Numeric(Number::Int(value)),
+            TokenKind::Float(value) => Value::Numeric(Number::Float(value)),
+            TokenKind::Bool(value) => Value::Bool(value),
+            _ => {
+                return Err(AssemblerError::UnexpectedToken {
+                    location: token.location,
+                    token: token.lexeme,
+                    expected: vec![
+                        TokenKind::Int(0),
+                        TokenKind::Float(0.0),
+                        TokenKind::Bool(false),
+                    ],
+                });
+            }
+        };
+        Ok(value)
     }
 
     fn parse_process_declaration(
@@ -126,12 +147,25 @@ impl Parser {
         match token.kind {
             TokenKind::NoOp => Ok(Some(StatementNode::new(Opcode::NoOp, token.location))),
             TokenKind::Yield => Ok(Some(StatementNode::new(Opcode::Yield, token.location))),
+            TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
+            TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
+            TokenKind::Push => self.parse_push(lexer, token.location),
+            TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             _ => Err(AssemblerError::UnexpectedToken {
                 location: token.location,
                 token: token.lexeme,
-                expected: vec![TokenKind::NoOp.to_string(), TokenKind::Yield.to_string()],
+                expected: vec![],
             }),
         }
+    }
+
+    fn parse_push(
+        &mut self,
+        lexer: &mut Lexer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let value = self.consume_value(lexer)?;
+        Ok(Some(StatementNode::new(Opcode::Push(value), location)))
     }
 }
 
@@ -157,6 +191,36 @@ mod tests {
                 name: "main".to_string(),
                 location: Location { line: 1, column: 1 },
             })
+        );
+    }
+
+    #[test]
+    fn test_parse_opcode_with_value() {
+        let mut lexer = Lexer::new("push true");
+        let mut parser = Parser::new();
+
+        let statement = parser.parse_single_statement(&mut lexer).unwrap();
+        assert_eq!(
+            statement,
+            Some(StatementNode::new(
+                Opcode::Push(Value::Bool(true)),
+                Location { line: 1, column: 1 }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_hash_as_shortcut_for_push() {
+        let mut lexer = Lexer::new("#1.234");
+        let mut parser = Parser::new();
+
+        let statement = parser.parse_single_statement(&mut lexer).unwrap();
+        assert_eq!(
+            statement,
+            Some(StatementNode::new(
+                Opcode::Push(Value::Numeric(Number::Float(1.234))),
+                Location { line: 1, column: 1 }
+            ))
         );
     }
 }
