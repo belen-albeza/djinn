@@ -14,3 +14,4 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde-wasm-bindgen = "0.6.5"
 tsify = { version = "0.5.6", features = ["js"] }
 wasm-bindgen = "0.2.123"
+console_error_panic_hook = "0.1.7"

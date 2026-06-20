@@ -26,5 +26,6 @@ pub fn build(project: Project) -> Result<Emulator, DjinnErrorList> {
 
 #[wasm_bindgen(start)]
 fn init() -> Result<(), JsValue> {
+    console_error_panic_hook::set_once();
     Ok(())
 }

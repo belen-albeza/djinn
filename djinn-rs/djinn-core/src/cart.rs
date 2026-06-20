@@ -17,7 +17,7 @@ impl Rom {
 impl InstructionProvider for Rom {
     fn instructions(&self) -> &[Opcode] {
         // TODO: return instructions for given process type
-        self.processes.get(&ProcessType(0)).unwrap().instructions()
+        self.processes.get(&ProcessType(1)).unwrap().instructions()
     }
 }
 
