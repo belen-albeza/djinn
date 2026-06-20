@@ -163,6 +163,7 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "or" => Some(TokenKind::Or),
         "xor" => Some(TokenKind::Xor),
         "add" => Some(TokenKind::Add),
+        "sub" => Some(TokenKind::Sub),
         _ => None,
     }
 }
