@@ -32,7 +32,6 @@ export default function StatusBar() {
   const [savedFlashing, setSavedFlashing] = useState(false);
   const messages = useStatusBarStore((state) => state.messages);
 
-  // TODO: only show cursor position if we are in the code editor path (e.g. '/' or '/code')
   const pathname = useLocation().pathname;
   const shallShowCursor = pathname === "/" || pathname === "/code"; // TODO:
   const cursor = useEditorStore((state) => state.cursor);

@@ -9,7 +9,8 @@ pub enum DeviceType {
 }
 
 impl From<u8> for DeviceType {
-    // TODO: Return an error instead of panicking
+    // NOTE: we can panic here because we are controlling the symbol values
+    //       in the compiler itself.
     fn from(value: u8) -> Self {
         match value {
             0x00 => Self::Console,
@@ -26,7 +27,8 @@ pub enum ConsoleApi {
 }
 
 impl From<u8> for ConsoleApi {
-    // TODO: Return an error instead of panicking
+    // NOTE: we can panic here because we are controlling the symbol values
+    //       in the compiler itself.
     fn from(value: u8) -> Self {
         match value {
             0x00 => Self::Log,

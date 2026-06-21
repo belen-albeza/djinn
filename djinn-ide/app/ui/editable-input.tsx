@@ -82,7 +82,6 @@ export default function EditableInput({
       <div
         className={clsx(
           "inline-grid items-center",
-          // TODO: customize this border color
           isEditing && "border-b border-sand-200",
         )}
       >

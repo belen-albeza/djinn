@@ -17,7 +17,6 @@ pub struct Project {
 
 #[wasm_bindgen]
 pub fn build(project: Project) -> Result<Emulator, DjinnErrorList> {
-    // TODO: Convert from djinnc errors to BuildErrorList
     let cart = djinnc::bundle(&project.title, &project.source_code.to_ascii_lowercase())
         .map_err(|e| DjinnErrorList(vec![DjinnError::from(e)]))?;
 

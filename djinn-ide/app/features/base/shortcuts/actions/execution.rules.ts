@@ -19,7 +19,7 @@ const isReadyToBuild = (ctx: ExecutionContext): boolean =>
   ctx.projectTitle.trim() !== "" &&
   ctx.pathname !== NEW_ROUTE;
 
-// TODO: eventually `canRun` will be more complex, so let's keep these separate
+// NOTE: eventually `canRun` will be more complex, so let's keep these separate
 export const canBuild = isReadyToBuild;
 export const canRun = isReadyToBuild;
 export const canSave = isReadyToBuild;

@@ -11,7 +11,7 @@ use alias::Alias;
 pub struct StatementNode {
     pub raw_opcode: Opcode,
     pub location: Location,
-    // TODO: arg
+    // TODO: args
 }
 
 impl StatementNode {
@@ -148,7 +148,7 @@ impl Parser {
         let mut res = Vec::new();
         while let Some(statement) = self.parse_single_statement(lexer)? {
             res.push(statement);
-            // TODO: increment PC for labels
+            // TODO: increment pc for labels
         }
 
         Ok(res)

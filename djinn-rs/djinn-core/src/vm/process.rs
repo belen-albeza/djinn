@@ -7,7 +7,7 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Status {
-    // TODO: waiting state?
+    // TODO: waiting state later, when we have a proper process scheduler
     Running,
     Terminated,
 }
