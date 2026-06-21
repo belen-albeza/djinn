@@ -49,7 +49,8 @@ pub trait Devices {
         cpu: &mut S,
     ) -> Result<bool>;
     fn video_buffer(&self) -> &[u8];
-    fn stdout(&self) -> String;
+    fn stdout(&self) -> &[String];
+    fn clear_stdout(&mut self);
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -79,6 +80,8 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     }
 
     pub fn tick(&mut self) -> Result<bool> {
+        self.devices.clear_stdout();
+
         self.main_process
             .tick(&mut self.devices, self.rom.instructions())?;
         let shall_halt = self.main_process.status() == Status::Terminated;

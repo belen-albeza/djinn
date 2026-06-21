@@ -111,7 +111,7 @@ mod tests {
         let mut devices = MockDevices::new();
         devices.expect_call_api().returning(|_, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
-        devices.expect_stdout().returning(String::new);
+        devices.expect_stdout().return_const(vec![]);
         devices
     }
 

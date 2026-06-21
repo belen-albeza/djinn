@@ -40,6 +40,10 @@ export default function EmulatorView({
         shallHalt = true;
       }
 
+      for (const message of emulator.stdout) {
+        console.log(message);
+      }
+
       const sharedBuffer = new Uint8Array(
         Emulator.memory.buffer,
         emulator.displayBuffer,

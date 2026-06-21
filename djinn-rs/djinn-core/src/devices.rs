@@ -81,6 +81,10 @@ impl ConsoleDevice {
         &self.messages
     }
 
+    fn clear_messages(&mut self) {
+        self.messages.clear();
+    }
+
     fn log(&mut self, message: String) {
         self.messages.push(message);
     }
@@ -124,7 +128,11 @@ impl Devices for DeviceSet {
         self.video.buffer()
     }
 
-    fn stdout(&self) -> String {
-        self.console.messages().join("\n")
+    fn stdout(&self) -> &[String] {
+        self.console.messages()
+    }
+
+    fn clear_stdout(&mut self) {
+        self.console.clear_messages();
     }
 }
