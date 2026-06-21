@@ -2,7 +2,7 @@ use std::ops::{Div, Rem};
 
 use super::Cpu;
 use crate::asm::{Number, Value};
-use crate::vm::{Result, RuntimeError};
+use crate::vm::{Result, RuntimeError, Stacked};
 
 impl Cpu {
     pub fn exec_opcode_not(&mut self) -> Result<bool> {

@@ -1,6 +1,7 @@
 use super::Result;
 use super::cpu::Cpu;
 use crate::asm::{Instruction, ProcessId, ProcessType};
+use crate::vm::Devices;
 
 use std::fmt;
 
@@ -38,9 +39,9 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick(&mut self, instructions: &[Instruction]) -> Result<()> {
+    pub fn tick(&mut self, devices: &mut impl Devices, instructions: &[Instruction]) -> Result<()> {
         while let Some(instruction) = self.cpu.read_opcode(instructions) {
-            let yielded = self.cpu.exec_opcode(instruction)?;
+            let yielded = self.cpu.exec_opcode(devices, instruction)?;
             if yielded {
                 return Ok(());
             }

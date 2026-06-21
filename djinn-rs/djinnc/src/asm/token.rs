@@ -16,6 +16,8 @@ pub enum TokenKind {
     // Process control opcodes
     NoOp,
     Yield,
+    // Device
+    Dev,
     // Stack opcodes
     Push,
     Pop,

@@ -84,6 +84,11 @@ impl Emulator {
     pub fn display_buffer(&self) -> *const u8 {
         unsafe { DISPLAY_BUFFER.as_ptr() }
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn stdout(&self) -> Vec<String> {
+        self.vm.devices().stdout().to_owned()
+    }
 }
 
 #[wasm_bindgen]
