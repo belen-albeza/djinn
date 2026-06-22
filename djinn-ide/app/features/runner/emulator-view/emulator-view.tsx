@@ -31,6 +31,7 @@ export default function EmulatorView({
     let error: DjinnError | null = null;
 
     const frame = () => {
+      console.log(`frame id: ${animationFrameId}`);
       let shallHalt = false;
 
       try {
