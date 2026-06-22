@@ -3,11 +3,12 @@ use super::cpu::Cpu;
 use crate::asm::{Instruction, ProcessId, ProcessType};
 use crate::vm::Devices;
 
+mod controller;
+pub use controller::Controller;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Status {
-    // TODO: waiting state later, when we have a proper process scheduler
     Running,
     Terminated,
 }

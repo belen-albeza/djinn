@@ -1,10 +1,10 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, ProcessId, ProcessType, Value};
+use crate::asm::{Instruction, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
-use process::{Process, Status};
+use process::{Controller, Process, Status};
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
@@ -34,7 +34,7 @@ pub struct Machine<D: Devices, R: InstructionProvider> {
     devices: D,
     rom: R,
     processes: Vec<Process>,
-    next_process_id: u32,
+    process_controller: Controller,
 }
 
 impl<D: Devices, R: InstructionProvider> Machine<D, R> {
@@ -43,17 +43,19 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
             devices,
             rom,
             processes: vec![],
-            next_process_id: 1,
+            process_controller: Controller::new(),
         };
 
         // spawn main process
-        res.spawn_process(ProcessType(1));
+        res.process_controller.spawn(ProcessType(1));
+        res.poll_process_controller();
         res
     }
 
     pub fn tick(&mut self) -> Result<bool> {
         self.devices.clear_stdout();
 
+        // tick every running process
         for process in &mut self.processes {
             process.tick(
                 &mut self.devices,
@@ -61,6 +63,10 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
             )?;
         }
 
+        // check for newly spawned or killed processes
+        self.poll_process_controller();
+
+        // we halt if there are no processes or all processes are terminated
         let shall_halt = self.processes.is_empty()
             || self
                 .processes
@@ -74,10 +80,10 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
         &self.devices
     }
 
-    fn spawn_process(&mut self, process_type: ProcessType) {
-        self.processes
-            .push(Process::new(ProcessId(self.next_process_id), process_type));
-        self.next_process_id += 1;
+    fn poll_process_controller(&mut self) {
+        // drain and add spawned processes to the general process list
+        self.processes.append(self.process_controller.spawned_mut());
+        // TODO: kill terminated processes
     }
 }
 
@@ -115,20 +121,5 @@ mod tests {
         let machine = any_machine_with_rom(any_rom(vec![]));
         assert_eq!(machine.processes.len(), 1);
         assert_eq!(machine.processes[0].process_type(), ProcessType(1));
-    }
-
-    #[test]
-    fn test_spawn_process() {
-        let rom = any_rom(vec![(
-            ProcessType(2),
-            ProcessDefinition::new(ProcessType(2), vec![]),
-        )]);
-
-        let mut machine = any_machine_with_rom(rom);
-        machine.spawn_process(ProcessType(2));
-
-        assert_eq!(machine.processes.len(), 2);
-        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
-        assert_eq!(machine.processes[1].process_type(), ProcessType(2));
     }
 }
