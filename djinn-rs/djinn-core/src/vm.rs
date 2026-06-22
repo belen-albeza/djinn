@@ -42,6 +42,7 @@ pub struct Machine<D: Devices, R: InstructionProvider> {
 #[cfg_attr(test, mockall::automock)]
 pub trait ProcessSignaler {
     fn spawn(&mut self, process_type: ProcessType) -> ProcessId;
+    fn kill(&mut self, process_id: ProcessId);
 }
 
 impl<D: Devices, R: InstructionProvider> Machine<D, R> {
@@ -89,12 +90,20 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     }
 
     fn poll_process_controller(&mut self) {
+        // drain and add spawned processes to the general process list
+        self.process_controller
+            .drain_spawned_into(&mut self.processes);
+
+        // mark killed processes as terminated
+        for id in self.process_controller.killed_mut().drain(..) {
+            if let Some(p) = self.processes.iter_mut().find(|process| process.id() == id) {
+                p.set_status(Status::Terminated);
+            }
+        }
+
         // remove terminated processes
         self.processes
             .retain(|process| process.status() != Status::Terminated);
-
-        // drain and add spawned processes to the general process list
-        self.processes.append(self.process_controller.spawned_mut());
     }
 }
 
@@ -163,7 +172,6 @@ mod tests {
 
         assert_eq!(machine.processes.len(), 2);
         assert_eq!(machine.processes[1].process_type(), ProcessType(2));
-        assert_eq!(machine.process_controller.spawned_mut().len(), 0);
 
         assert_eq!(machine.tick(), Ok(true));
         assert_eq!(machine.processes.len(), 0);
@@ -230,5 +238,42 @@ mod tests {
         // Frame 2: both process run, #1 before #2 (spawn order)
         machine.tick().unwrap();
         assert_eq!(*trace.lock().unwrap(), vec![1, 2]);
+    }
+
+    #[test]
+    fn test_killed_processes_are_removed() {
+        let rom = Rom::new(HashMap::from([
+            (
+                ProcessType(1),
+                ProcessDefinition::new(
+                    ProcessType(1),
+                    vec![
+                        Instruction::new(Opcode::Spawn(ProcessType(2)), Location::default()),
+                        Instruction::new(Opcode::Yield, Location::default()),
+                        Instruction::new(
+                            Opcode::Push(Value::Process(ProcessId(2))),
+                            Location::default(),
+                        ),
+                        Instruction::new(Opcode::Kill, Location::default()),
+                    ],
+                ),
+            ),
+            (
+                ProcessType(2),
+                ProcessDefinition::new(
+                    ProcessType(2),
+                    vec![Instruction::new(Opcode::Yield, Location::default())],
+                ),
+            ),
+        ]));
+
+        // Frame 1: process #1 spawns #2, then yields
+        let mut machine = Machine::new(any_devices(), rom);
+        machine.tick().unwrap();
+        assert_eq!(machine.processes.len(), 2);
+
+        // Frame 2: process #1 kills #2, then terminates. Process #2 yields.
+        machine.tick().unwrap();
+        assert!(machine.processes.is_empty()); // no process remains
     }
 }

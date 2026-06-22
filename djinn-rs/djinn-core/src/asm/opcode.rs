@@ -12,6 +12,7 @@ pub enum Opcode {
     // Process control
     Yield,
     Spawn(ProcessType),
+    Kill,
     // Stack
     Push(Value),
     Pop,

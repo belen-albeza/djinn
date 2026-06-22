@@ -151,6 +151,7 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "noop" => Some(TokenKind::NoOp),
         "yld" => Some(TokenKind::Yield),
         "spwn" => Some(TokenKind::Spawn),
+        "kill" => Some(TokenKind::Kill),
         // device
         "dev" => Some(TokenKind::Dev),
         // stack
@@ -244,6 +245,7 @@ yld ;actual opcode
             ("noop", TokenKind::NoOp),
             ("yld", TokenKind::Yield),
             ("spwn", TokenKind::Spawn),
+            ("kill", TokenKind::Kill),
             ("push", TokenKind::Push),
             ("pop", TokenKind::Pop),
             ("dup", TokenKind::Dup),

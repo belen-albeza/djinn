@@ -182,6 +182,7 @@ impl Parser {
             TokenKind::NoOp => Ok(Some(StatementNode::new(Opcode::NoOp, token.location))),
             TokenKind::Yield => Ok(Some(StatementNode::new(Opcode::Yield, token.location))),
             TokenKind::Spawn => self.parse_spawn(lexer, token.location),
+            TokenKind::Kill => Ok(Some(StatementNode::new(Opcode::Kill, token.location))),
             TokenKind::Dev => self.parse_dev_call(lexer, token.location),
             TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),

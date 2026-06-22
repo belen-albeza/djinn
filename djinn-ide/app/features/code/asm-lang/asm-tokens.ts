@@ -8,6 +8,7 @@ const OPCODES = new Set([
   "pop",
   "dup",
   "spwn",
+  "kill",
   "yld",
   "sig",
   "stg",
