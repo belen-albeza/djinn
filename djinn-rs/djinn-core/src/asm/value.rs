@@ -175,6 +175,19 @@ impl TryFrom<Value> for Number {
     }
 }
 
+impl TryFrom<Value> for ProcessId {
+    type Error = RuntimeError;
+    fn try_from(value: Value) -> Result<Self> {
+        match value {
+            Value::Process(process_id) => Ok(process_id),
+            _ => Err(RuntimeError::TypeError(
+                Location::default(),
+                format!("`{}` is not a process id", value),
+            )),
+        }
+    }
+}
+
 fn fmt_f64_min_1_decimal(x: f64) -> String {
     let s = format!("{}", x);
     if s.contains('.') || s.contains('e') || s.contains('E') {

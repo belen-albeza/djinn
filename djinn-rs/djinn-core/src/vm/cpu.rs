@@ -48,6 +48,11 @@ impl Cpu {
                 self.push_stack(Value::Process(process_id));
                 Ok(false)
             }
+            Opcode::Kill => {
+                let process_id = self.pop_stack()?.try_into()?;
+                ctx.signaler.kill(process_id);
+                Ok(false)
+            }
             Opcode::Push(value) => {
                 self.push_stack(value);
                 Ok(false)
@@ -179,12 +184,37 @@ mod tests {
     fn test_spawn_opcode() {
         let mut cpu = any_cpu();
         let mut env = any_env();
+        let mut signaler = MockProcessSignaler::new();
+        signaler.expect_spawn().times(1).returning(|_| ProcessId(2));
+        env.signaler = signaler;
+
         let any_process_type = ProcessType(5);
         assert_eq!(
             cpu.exec_opcode(&mut env.context(), opcode(Opcode::Spawn(any_process_type))),
             Ok(false)
         );
         assert_eq!(cpu.pop_stack(), Ok(Value::Process(ProcessId(2))));
+    }
+
+    #[test]
+    fn test_kill_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+
+        let mut signaler = MockProcessSignaler::new();
+        signaler
+            .expect_kill()
+            .withf(|id| *id == ProcessId(2))
+            .times(1)
+            .returning(|_| ());
+        env.signaler = signaler;
+
+        cpu.stack.push(Value::Process(ProcessId(2)));
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Kill)),
+            Ok(false)
+        );
+        assert!(cpu.stack.is_empty());
     }
 
     #[test]

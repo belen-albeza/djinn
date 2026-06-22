@@ -17,6 +17,7 @@ pub enum TokenKind {
     NoOp,
     Yield,
     Spawn,
+    Kill,
     // Device
     Dev,
     // Stack opcodes

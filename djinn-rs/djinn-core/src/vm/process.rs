@@ -59,8 +59,16 @@ impl Process {
         self.status
     }
 
+    pub fn set_status(&mut self, status: Status) {
+        self.status = status;
+    }
+
     pub fn process_type(&self) -> ProcessType {
         self.process_type
+    }
+
+    pub fn id(&self) -> ProcessId {
+        self.id
     }
 }
 
