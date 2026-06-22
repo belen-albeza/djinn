@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::asm::{Instruction, ProcessDefinition, ProcessType};
+use crate::error::{Result, RuntimeError};
 use crate::vm::InstructionProvider;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,9 +16,12 @@ impl Rom {
 }
 
 impl InstructionProvider for Rom {
-    fn instructions(&self) -> &[Instruction] {
-        // TODO: return instructions for given process type
-        self.processes.get(&ProcessType(1)).unwrap().instructions()
+    fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]> {
+        let process = self
+            .processes
+            .get(&process_type)
+            .ok_or(RuntimeError::ProcessNotFound(process_type))?;
+        Ok(process.instructions())
     }
 }
 

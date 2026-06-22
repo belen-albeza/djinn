@@ -6,13 +6,15 @@ clean:
 build-wasm:
     wasm-pack build djinn-rs/djinn-dev-wasm --out-dir ../../packages/djinn-dev-wasm
 
+test-wasm:
+    cargo test --manifest-path djinn-rs/Cargo.toml
+
 dev: build-wasm
     bun --cwd djinn-ide dev
 
 build: build-wasm
     bun --cwd djinn-ide build
 
-test:
-    cargo test --manifest-path djinn-rs/Cargo.toml
+test: test-wasm
     bun --cwd djinn-ide test
 

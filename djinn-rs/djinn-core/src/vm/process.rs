@@ -54,6 +54,10 @@ impl Process {
     pub fn status(&self) -> Status {
         self.status
     }
+
+    pub fn process_type(&self) -> ProcessType {
+        self.process_type
+    }
 }
 
 impl fmt::Display for Process {
