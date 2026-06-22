@@ -1,10 +1,16 @@
-use crate::asm::{Instruction, Location, Opcode, Value};
-use crate::vm::Result;
+use crate::asm::{Instruction, Location, Number, Opcode, Value};
 use crate::vm::{Devices, ValueStack};
+use crate::vm::{ProcessSignaler, Result};
 
-mod stack;
+pub(crate) mod stack;
 use stack::Stack;
 mod opcodes_alu;
+
+#[derive(Debug)]
+pub struct Context<'a, D: Devices, S: ProcessSignaler> {
+    pub(crate) devices: &'a mut D,
+    pub(crate) signaler: &'a mut S,
+}
 
 pub struct Cpu {
     pc: usize,
@@ -22,9 +28,9 @@ impl Cpu {
     }
 
     /// Executes an opcode and returns whether the process has yielded.
-    pub fn exec_opcode(
+    pub fn exec_opcode<'a, D: Devices, S: ProcessSignaler>(
         &mut self,
-        devices: &mut impl Devices,
+        ctx: &mut Context<'a, D, S>,
         instruction: Instruction,
     ) -> Result<bool> {
         let Instruction { opcode, location } = instruction;
@@ -33,11 +39,15 @@ impl Cpu {
         match opcode {
             Opcode::NoOp => Ok(false),
             Opcode::Device(device_type, api_op) => {
-                devices.call_api(device_type, api_op, &mut self.stack, self.current_location)
+                ctx.devices
+                    .call_api(device_type, api_op, &mut self.stack, self.current_location)
             }
             Opcode::Yield => Ok(true),
-            Opcode::Spawn(_process_type) => {
-                unimplemented!()
+            Opcode::Spawn(process_type) => {
+                let process_id = ctx.signaler.spawn(process_type);
+                // FIXME: push process id as an actualy Value variant
+                self.push_stack(Value::Numeric(Number::Int(process_id.0 as i32)));
+                Ok(false)
             }
             Opcode::Push(value) => {
                 self.push_stack(value);
@@ -98,20 +108,48 @@ impl Default for Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{Location, Number, Value};
+    use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
     use crate::devices::{ConsoleApi, DeviceType};
-    use crate::vm::MockDevices;
+    use crate::vm::{MockDevices, MockProcessSignaler};
 
     fn any_cpu() -> Cpu {
         Cpu::default()
     }
 
-    fn any_devices() -> impl Devices {
+    struct TestEnv {
+        devices: MockDevices,
+        signaler: MockProcessSignaler,
+    }
+
+    impl TestEnv {
+        fn context(&mut self) -> Context<'_, MockDevices, MockProcessSignaler> {
+            Context {
+                devices: &mut self.devices,
+                signaler: &mut self.signaler,
+            }
+        }
+    }
+
+    fn any_env() -> TestEnv {
+        TestEnv {
+            devices: any_devices(),
+            signaler: any_signaler(),
+        }
+    }
+
+    fn any_devices() -> MockDevices {
         let mut devices = MockDevices::new();
         devices.expect_call_api().returning(|_, _, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
         devices.expect_stdout().return_const(vec![]);
+
         devices
+    }
+
+    fn any_signaler() -> MockProcessSignaler {
+        let mut signaler = MockProcessSignaler::new();
+        signaler.expect_spawn().returning(|_| ProcessId(2));
+        signaler
     }
 
     fn opcode(opcode: Opcode) -> Instruction {
@@ -121,8 +159,9 @@ mod tests {
     #[test]
     fn test_yield_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         assert_eq!(
-            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Yield)),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Yield)),
             Ok(true)
         );
     }
@@ -130,18 +169,32 @@ mod tests {
     #[test]
     fn test_noop_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         assert_eq!(
-            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::NoOp)),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::NoOp)),
             Ok(false)
         );
     }
 
     #[test]
+    fn test_spawn_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let any_process_type = ProcessType(5);
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Spawn(any_process_type))),
+            Ok(false)
+        );
+        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(2))));
+    }
+
+    #[test]
     fn test_push_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         assert_eq!(
             cpu.exec_opcode(
-                &mut any_devices(),
+                &mut env.context(),
                 opcode(Opcode::Push(Value::Numeric(Number::Int(1))))
             ),
             Ok(false)
@@ -155,10 +208,11 @@ mod tests {
     #[test]
     fn test_pop_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
         assert_eq!(
-            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Pop)),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Pop)),
             Ok(false)
         );
         assert!(cpu.stack.is_empty());
@@ -167,10 +221,11 @@ mod tests {
     #[test]
     fn test_dup_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         cpu.stack.push(Value::Numeric(Number::Int(1)));
 
         assert_eq!(
-            cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Dup)),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Dup)),
             Ok(false)
         );
         assert_eq!(
@@ -186,6 +241,7 @@ mod tests {
     #[test]
     fn test_device_opcode() {
         let mut cpu = any_cpu();
+        let mut env = any_env();
         let mut devices = MockDevices::new();
         devices
             .expect_call_api()
@@ -194,8 +250,10 @@ mod tests {
             })
             .times(1)
             .returning(|_, _, _, _| Ok(false));
+        env.devices = devices;
+
         let res = cpu.exec_opcode(
-            &mut devices,
+            &mut env.context(),
             opcode(Opcode::Device(DeviceType::Console, ConsoleApi::Log as u8)),
         );
         assert_eq!(res, Ok(false));

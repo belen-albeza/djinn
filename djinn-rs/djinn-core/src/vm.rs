@@ -1,9 +1,10 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, Location, ProcessType, Value};
+use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
+use cpu::Context;
 use process::{Controller, Process, Status};
 
 #[cfg_attr(test, mockall::automock)]
@@ -38,6 +39,11 @@ pub struct Machine<D: Devices, R: InstructionProvider> {
     process_controller: Controller,
 }
 
+#[cfg_attr(test, mockall::automock)]
+pub trait ProcessSignaler {
+    fn spawn(&mut self, process_type: ProcessType) -> ProcessId;
+}
+
 impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     pub fn new(devices: D, rom: R) -> Self {
         let mut res = Self {
@@ -54,14 +60,16 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     }
 
     pub fn tick(&mut self) -> Result<bool> {
-        self.devices.clear_stdout();
+        let mut ctx = Context {
+            devices: &mut self.devices,
+            signaler: &mut self.process_controller,
+        };
+
+        ctx.devices.clear_stdout();
 
         // tick every running process
         for process in &mut self.processes {
-            process.tick(
-                &mut self.devices,
-                self.rom.instructions(process.process_type())?,
-            )?;
+            process.tick(&mut ctx, self.rom.instructions(process.process_type())?)?;
         }
 
         // check for newly spawned or killed processes
@@ -91,14 +99,16 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{ProcessDefinition, ProcessType};
+    use crate::asm::{Opcode, ProcessDefinition, ProcessType};
     use crate::cart::Rom;
+    use std::collections::HashMap;
 
     fn any_devices() -> impl Devices {
         let mut devices = MockDevices::new();
         devices.expect_call_api().returning(|_, _, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
         devices.expect_stdout().return_const(vec![]);
+        devices.expect_clear_stdout().returning(|| ());
         devices
     }
 
@@ -122,5 +132,35 @@ mod tests {
         let machine = any_machine_with_rom(any_rom(vec![]));
         assert_eq!(machine.processes.len(), 1);
         assert_eq!(machine.processes[0].process_type(), ProcessType(1));
+    }
+
+    #[test]
+    fn test_tick_spawns_new_processes() {
+        let rom = Rom::new(HashMap::from([
+            (
+                ProcessType(1),
+                ProcessDefinition::new(
+                    ProcessType(1),
+                    vec![Instruction::new(
+                        Opcode::Spawn(ProcessType(2)),
+                        Location::default(),
+                    )],
+                ),
+            ),
+            (
+                ProcessType(2),
+                ProcessDefinition::new(ProcessType(2), vec![]),
+            ),
+        ]));
+
+        let mut machine = any_machine_with_rom(rom);
+        assert_eq!(machine.processes.len(), 1);
+        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
+
+        assert_eq!(machine.tick(), Ok(false));
+
+        assert_eq!(machine.processes.len(), 2);
+        assert_eq!(machine.processes[1].process_type(), ProcessType(2));
+        assert_eq!(machine.process_controller.spawned_mut().len(), 0);
     }
 }
