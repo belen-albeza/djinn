@@ -1,5 +1,5 @@
 use crate::asm::Location;
-use crate::vm::{Result, RuntimeError};
+use crate::error::{Result, RuntimeError};
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;

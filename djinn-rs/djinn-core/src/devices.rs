@@ -1,4 +1,5 @@
-use crate::vm::{Devices, Result, Stacked};
+use crate::error::Result;
+use crate::vm::{Devices, Stacked};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Default)]

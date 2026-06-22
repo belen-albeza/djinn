@@ -1,46 +1,10 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
+use crate::asm::{Instruction, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
+use crate::error::{Result, RuntimeError};
 use process::{Process, Status};
-
-#[derive(Debug, thiserror::Error, PartialEq)]
-pub enum RuntimeError {
-    #[error("Invalid ROM")]
-    InvalidRom,
-    #[error("Stack underflow")]
-    StackUnderflow(Location),
-    #[error("Type error: {1}")]
-    TypeError(Location, String),
-    #[error("Division by zero")]
-    DivisionByZero(Location),
-    #[error("Process {0} not found")]
-    ProcessNotFound(ProcessType),
-}
-
-impl RuntimeError {
-    pub fn location(&self) -> Location {
-        match self {
-            RuntimeError::StackUnderflow(location) => *location,
-            RuntimeError::TypeError(location, _) => *location,
-            RuntimeError::DivisionByZero(location) => *location,
-            RuntimeError::InvalidRom => Location::default(),
-            RuntimeError::ProcessNotFound(_) => Location::default(),
-        }
-    }
-
-    pub fn with_location(self, location: Location) -> Self {
-        match self {
-            RuntimeError::StackUnderflow(_) => RuntimeError::StackUnderflow(location),
-            RuntimeError::TypeError(_, message) => RuntimeError::TypeError(location, message),
-            RuntimeError::DivisionByZero(_) => RuntimeError::DivisionByZero(location),
-            _ => self,
-        }
-    }
-}
-
-pub type Result<T> = std::result::Result<T, RuntimeError>;
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
@@ -114,5 +78,57 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
         self.processes
             .push(Process::new(ProcessId(self.next_process_id), process_type));
         self.next_process_id += 1;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::asm::{ProcessDefinition, ProcessType};
+    use crate::cart::Rom;
+
+    fn any_devices() -> impl Devices {
+        let mut devices = MockDevices::new();
+        devices.expect_call_api().returning(|_, _, _| Ok(false));
+        devices.expect_video_buffer().return_const(Vec::<u8>::new());
+        devices.expect_stdout().return_const(vec![]);
+        devices
+    }
+
+    fn any_rom(extra_processes: Vec<(ProcessType, ProcessDefinition)>) -> Rom {
+        let with_main = extra_processes.into_iter().chain(vec![(
+            ProcessType(1),
+            ProcessDefinition::new(ProcessType(1), vec![]),
+        )]);
+
+        Rom::new(with_main.into_iter().collect())
+    }
+
+    fn any_machine_with_rom(
+        r: impl InstructionProvider,
+    ) -> Machine<impl Devices, impl InstructionProvider> {
+        Machine::new(any_devices(), r)
+    }
+
+    #[test]
+    fn test_new_automatically_spawns_main_process() {
+        let machine = any_machine_with_rom(any_rom(vec![]));
+        assert_eq!(machine.processes.len(), 1);
+        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
+    }
+
+    #[test]
+    fn test_spawn_process() {
+        let rom = any_rom(vec![(
+            ProcessType(2),
+            ProcessDefinition::new(ProcessType(2), vec![]),
+        )]);
+
+        let mut machine = any_machine_with_rom(rom);
+        machine.spawn_process(ProcessType(2));
+
+        assert_eq!(machine.processes.len(), 2);
+        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
+        assert_eq!(machine.processes[1].process_type(), ProcessType(2));
     }
 }

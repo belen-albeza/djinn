@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use crate::asm::{Instruction, ProcessDefinition, ProcessType};
-use crate::vm::{InstructionProvider, Result, RuntimeError};
+use crate::error::{Result, RuntimeError};
+use crate::vm::InstructionProvider;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rom {
