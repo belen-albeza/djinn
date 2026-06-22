@@ -8,13 +8,15 @@ use process::{Process, Status};
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum RuntimeError {
     #[error("Invalid ROM")]
-    LoadRomError,
+    InvalidRom,
     #[error("Stack underflow")]
     StackUnderflow(Location),
     #[error("Type error: {1}")]
     TypeError(Location, String),
     #[error("Division by zero")]
     DivisionByZero(Location),
+    #[error("Process {0} not found")]
+    ProcessNotFound(ProcessType),
 }
 
 impl RuntimeError {
@@ -23,7 +25,8 @@ impl RuntimeError {
             RuntimeError::StackUnderflow(location) => *location,
             RuntimeError::TypeError(location, _) => *location,
             RuntimeError::DivisionByZero(location) => *location,
-            RuntimeError::LoadRomError => Location::default(),
+            RuntimeError::InvalidRom => Location::default(),
+            RuntimeError::ProcessNotFound(_) => Location::default(),
         }
     }
 
@@ -32,7 +35,7 @@ impl RuntimeError {
             RuntimeError::StackUnderflow(_) => RuntimeError::StackUnderflow(location),
             RuntimeError::TypeError(_, message) => RuntimeError::TypeError(location, message),
             RuntimeError::DivisionByZero(_) => RuntimeError::DivisionByZero(location),
-            RuntimeError::LoadRomError => RuntimeError::LoadRomError,
+            _ => self,
         }
     }
 }
@@ -60,36 +63,56 @@ pub trait Stacked {
 }
 
 pub trait InstructionProvider {
-    fn instructions(&self) -> &[Instruction];
+    fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]>;
 }
 
 pub struct Machine<D: Devices, R: InstructionProvider> {
     devices: D,
     rom: R,
-    // TODO: use a proper process scheduler
-    main_process: Process,
+    processes: Vec<Process>,
+    next_process_id: u32,
 }
 
 impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     pub fn new(devices: D, rom: R) -> Self {
-        Self {
+        let mut res = Self {
             devices,
             rom,
-            main_process: Process::new(ProcessId(1), ProcessType(0)),
-        }
+            processes: vec![],
+            next_process_id: 1,
+        };
+
+        // spawn main process
+        res.spawn_process(ProcessType(1));
+        res
     }
 
     pub fn tick(&mut self) -> Result<bool> {
         self.devices.clear_stdout();
 
-        self.main_process
-            .tick(&mut self.devices, self.rom.instructions())?;
-        let shall_halt = self.main_process.status() == Status::Terminated;
+        for process in &mut self.processes {
+            process.tick(
+                &mut self.devices,
+                self.rom.instructions(process.process_type())?,
+            )?;
+        }
+
+        let shall_halt = self.processes.is_empty()
+            || self
+                .processes
+                .iter()
+                .all(|process| process.status() == Status::Terminated);
 
         Ok(shall_halt)
     }
 
     pub fn devices(&self) -> &D {
         &self.devices
+    }
+
+    fn spawn_process(&mut self, process_type: ProcessType) {
+        self.processes
+            .push(Process::new(ProcessId(self.next_process_id), process_type));
+        self.next_process_id += 1;
     }
 }

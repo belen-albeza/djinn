@@ -26,6 +26,12 @@ impl Default for Location {
 #[derive(Debug, Clone, Copy, PartialEq, Default, Eq, Hash)]
 pub struct ProcessType(pub u32);
 
+impl fmt::Display for ProcessType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "~{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ProcessId(pub u32);
 
