@@ -69,18 +69,17 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
 
         // tick every running process
         for process in &mut self.processes {
+            if process.status() == Status::Terminated {
+                continue;
+            }
+
             process.tick(&mut ctx, self.rom.instructions(process.process_type())?)?;
         }
 
         // check for newly spawned or killed processes
         self.poll_process_controller();
-
-        // we halt if there are no processes or all processes are terminated
-        let shall_halt = self.processes.is_empty()
-            || self
-                .processes
-                .iter()
-                .all(|process| process.status() == Status::Terminated);
+        // we halt if there are no processes left
+        let shall_halt = self.processes.is_empty();
 
         Ok(shall_halt)
     }
@@ -90,9 +89,12 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
     }
 
     fn poll_process_controller(&mut self) {
+        // remove terminated processes
+        self.processes
+            .retain(|process| process.status() != Status::Terminated);
+
         // drain and add spawned processes to the general process list
         self.processes.append(self.process_controller.spawned_mut());
-        // TODO: kill terminated processes
     }
 }
 
@@ -141,10 +143,10 @@ mod tests {
                 ProcessType(1),
                 ProcessDefinition::new(
                     ProcessType(1),
-                    vec![Instruction::new(
-                        Opcode::Spawn(ProcessType(2)),
-                        Location::default(),
-                    )],
+                    vec![
+                        Instruction::new(Opcode::Spawn(ProcessType(2)), Location::default()),
+                        Instruction::new(Opcode::Yield, Location::default()),
+                    ],
                 ),
             ),
             (
@@ -162,5 +164,71 @@ mod tests {
         assert_eq!(machine.processes.len(), 2);
         assert_eq!(machine.processes[1].process_type(), ProcessType(2));
         assert_eq!(machine.process_controller.spawned_mut().len(), 0);
+
+        assert_eq!(machine.tick(), Ok(true));
+        assert_eq!(machine.processes.len(), 0);
+    }
+
+    #[test]
+    fn test_concurrent_processes() {
+        use crate::devices::DeviceType;
+        use std::sync::{Arc, Mutex};
+
+        // This tests hijacks the Device api to insert a mock that keeps track
+        // of the order in which the processes ticked.
+        let trace = Arc::new(Mutex::new(Vec::<u8>::new()));
+
+        // Re-usable opcodes for convenience
+        let probe =
+            |id: u8| Instruction::new(Opcode::Device(DeviceType::Console, id), Location::default());
+        let yield_ = || Instruction::new(Opcode::Yield, Location::default());
+        let spawn = |t| Instruction::new(Opcode::Spawn(t), Location::default());
+
+        let rom = Rom::new(HashMap::from([
+            (
+                ProcessType(1),
+                ProcessDefinition::new(
+                    ProcessType(1),
+                    vec![
+                        spawn(ProcessType(2)),
+                        probe(1),
+                        yield_(),
+                        probe(1),
+                        yield_(),
+                    ],
+                ),
+            ),
+            (
+                ProcessType(2),
+                ProcessDefinition::new(
+                    ProcessType(2),
+                    vec![probe(2), yield_(), probe(2), yield_()],
+                ),
+            ),
+        ]));
+
+        // Custom devices that record the probe id instead of any_devices().
+        let mut devices = MockDevices::new();
+        let log = trace.clone();
+        devices.expect_call_api().returning(move |_, api_op, _, _| {
+            log.lock().unwrap().push(api_op);
+            Ok(false)
+        });
+        devices.expect_video_buffer().return_const(Vec::<u8>::new());
+        devices.expect_stdout().return_const(vec![]);
+        devices.expect_clear_stdout().returning(|| ());
+
+        let mut machine = Machine::new(devices, rom);
+
+        // Frame 1: only process #1 exists; it spawns #2 but it starts next frame.
+        machine.tick().unwrap();
+        assert_eq!(*trace.lock().unwrap(), vec![1]);
+
+        // clear the trace
+        trace.lock().unwrap().clear();
+
+        // Frame 2: both process run, #1 before #2 (spawn order)
+        machine.tick().unwrap();
+        assert_eq!(*trace.lock().unwrap(), vec![1, 2]);
     }
 }
