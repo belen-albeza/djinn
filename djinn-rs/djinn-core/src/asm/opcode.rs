@@ -1,4 +1,7 @@
-use crate::{asm::Value, devices::DeviceType};
+use crate::{
+    asm::{ProcessType, Value},
+    devices::DeviceType,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Opcode {
@@ -8,6 +11,7 @@ pub enum Opcode {
     Device(DeviceType, u8),
     // Process control
     Yield,
+    Spawn(ProcessType),
     // Stack
     Push(Value),
     Pop,

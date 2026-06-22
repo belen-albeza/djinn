@@ -34,6 +34,9 @@ impl Cpu {
             Opcode::NoOp => Ok(false),
             Opcode::Device(device_type, api_op) => devices.call_api(device_type, api_op, self),
             Opcode::Yield => Ok(true),
+            Opcode::Spawn(_process_type) => {
+                unimplemented!()
+            }
             Opcode::Push(value) => {
                 self.stack.push(value);
                 Ok(false)

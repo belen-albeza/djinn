@@ -31,6 +31,8 @@ pub enum AssemblerError {
     ProcessAlreadyDefined(Location, String),
     #[error("Unknown alias: {1}.")]
     UnknownAlias(Location, String),
+    #[error("Missing argument")]
+    MissingArgument(Location),
 }
 
 impl AssemblerError {
@@ -41,6 +43,7 @@ impl AssemblerError {
             AssemblerError::MainProcessNotFound(loc) => *loc,
             AssemblerError::ProcessAlreadyDefined(loc, _) => *loc,
             AssemblerError::UnknownAlias(loc, _) => *loc,
+            AssemblerError::MissingArgument(loc) => *loc,
         }
     }
 
@@ -65,6 +68,7 @@ impl AssemblerError {
                 AssemblerError::ProcessAlreadyDefined(location, name)
             }
             AssemblerError::UnknownAlias(_, alias) => AssemblerError::UnknownAlias(location, alias),
+            AssemblerError::MissingArgument(_) => AssemblerError::MissingArgument(location),
         }
     }
 }
