@@ -1,4 +1,4 @@
-use crate::asm::{Instruction, Location, Number, Opcode, Value};
+use crate::asm::{Instruction, Location, Opcode, Value};
 use crate::vm::{Devices, ValueStack};
 use crate::vm::{ProcessSignaler, Result};
 
@@ -45,8 +45,7 @@ impl Cpu {
             Opcode::Yield => Ok(true),
             Opcode::Spawn(process_type) => {
                 let process_id = ctx.signaler.spawn(process_type);
-                // FIXME: push process id as an actualy Value variant
-                self.push_stack(Value::Numeric(Number::Int(process_id.0 as i32)));
+                self.push_stack(Value::Process(process_id));
                 Ok(false)
             }
             Opcode::Push(value) => {
@@ -185,7 +184,7 @@ mod tests {
             cpu.exec_opcode(&mut env.context(), opcode(Opcode::Spawn(any_process_type))),
             Ok(false)
         );
-        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(2))));
+        assert_eq!(cpu.pop_stack(), Ok(Value::Process(ProcessId(2))));
     }
 
     #[test]
