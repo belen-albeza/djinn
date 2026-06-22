@@ -1,7 +1,7 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, ProcessType, Value};
+use crate::asm::{Instruction, Location, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use process::{Controller, Process, Status};
@@ -9,11 +9,12 @@ use process::{Controller, Process, Status};
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
     #[cfg_attr(test, mockall::concretize)]
-    fn call_api<S: Stacked>(
+    fn call_api<S: ValueStack>(
         &mut self,
         device_type: DeviceType,
         api_op: u8,
-        cpu: &mut S,
+        stack: &mut S,
+        location: Location,
     ) -> Result<bool>;
     fn video_buffer(&self) -> &[u8];
     fn stdout(&self) -> &[String];
@@ -21,9 +22,9 @@ pub trait Devices {
 }
 
 #[cfg_attr(test, mockall::automock)]
-pub trait Stacked {
-    fn push_stack(&mut self, value: Value);
-    fn pop_stack(&mut self) -> Result<Value>;
+pub trait ValueStack {
+    fn push(&mut self, value: Value);
+    fn pop(&mut self, location: Location) -> Result<Value>;
 }
 
 pub trait InstructionProvider {
@@ -95,7 +96,7 @@ mod tests {
 
     fn any_devices() -> impl Devices {
         let mut devices = MockDevices::new();
-        devices.expect_call_api().returning(|_, _, _| Ok(false));
+        devices.expect_call_api().returning(|_, _, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
         devices.expect_stdout().return_const(vec![]);
         devices

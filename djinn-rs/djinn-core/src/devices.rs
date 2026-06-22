@@ -1,5 +1,6 @@
+use crate::asm::Location;
 use crate::error::Result;
-use crate::vm::{Devices, Stacked};
+use crate::vm::{Devices, ValueStack};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -70,10 +71,15 @@ impl ConsoleDevice {
         }
     }
 
-    fn call_api(&mut self, raw_op: u8, cpu: &mut impl Stacked) -> Result<bool> {
+    fn call_api(
+        &mut self,
+        raw_op: u8,
+        stack: &mut impl ValueStack,
+        location: Location,
+    ) -> Result<bool> {
         match ConsoleApi::from(raw_op) {
             ConsoleApi::Log => {
-                let value = cpu.pop_stack()?;
+                let value = stack.pop(location)?;
                 self.log(format!("{}", value));
                 Ok(false)
             }
@@ -115,14 +121,15 @@ impl Default for DeviceSet {
 }
 
 impl Devices for DeviceSet {
-    fn call_api<S: Stacked>(
+    fn call_api<S: ValueStack>(
         &mut self,
         device_type: DeviceType,
         api_op: u8,
-        cpu: &mut S,
+        stack: &mut S,
+        location: Location,
     ) -> Result<bool> {
         match device_type {
-            DeviceType::Console => self.console.call_api(api_op, cpu),
+            DeviceType::Console => self.console.call_api(api_op, stack, location),
             DeviceType::Video => unimplemented!(),
         }
     }

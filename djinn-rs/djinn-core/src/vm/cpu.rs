@@ -1,6 +1,6 @@
 use crate::asm::{Instruction, Location, Opcode, Value};
-use crate::vm::{Devices, Stacked};
-use crate::vm::{Result, RuntimeError};
+use crate::vm::Result;
+use crate::vm::{Devices, ValueStack};
 
 mod stack;
 use stack::Stack;
@@ -32,13 +32,15 @@ impl Cpu {
 
         match opcode {
             Opcode::NoOp => Ok(false),
-            Opcode::Device(device_type, api_op) => devices.call_api(device_type, api_op, self),
+            Opcode::Device(device_type, api_op) => {
+                devices.call_api(device_type, api_op, &mut self.stack, self.current_location)
+            }
             Opcode::Yield => Ok(true),
             Opcode::Spawn(_process_type) => {
                 unimplemented!()
             }
             Opcode::Push(value) => {
-                self.stack.push(value);
+                self.push_stack(value);
                 Ok(false)
             }
             Opcode::Pop => {
@@ -47,8 +49,8 @@ impl Cpu {
             }
             Opcode::Dup => {
                 let value = self.pop_stack()?;
-                self.stack.push(value);
-                self.stack.push(value);
+                self.push_stack(value);
+                self.push_stack(value);
                 Ok(false)
             }
             Opcode::Not => self.exec_opcode_not(),
@@ -77,19 +79,13 @@ impl Cpu {
         self.pc += 1;
         Some(*instruction)
     }
-}
 
-impl Stacked for Cpu {
     fn push_stack(&mut self, value: Value) {
         self.stack.push(value);
     }
 
     fn pop_stack(&mut self) -> Result<Value> {
-        let value = self
-            .stack
-            .pop()
-            .ok_or(RuntimeError::StackUnderflow(self.current_location))?;
-        Ok(value)
+        self.stack.pop(self.current_location)
     }
 }
 
@@ -112,7 +108,7 @@ mod tests {
 
     fn any_devices() -> impl Devices {
         let mut devices = MockDevices::new();
-        devices.expect_call_api().returning(|_, _, _| Ok(false));
+        devices.expect_call_api().returning(|_, _, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
         devices.expect_stdout().return_const(vec![]);
         devices
@@ -150,7 +146,10 @@ mod tests {
             ),
             Ok(false)
         );
-        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
+        assert_eq!(
+            cpu.stack.pop(Location::default()),
+            Ok(Value::Numeric(Number::Int(1)))
+        );
     }
 
     #[test]
@@ -174,8 +173,14 @@ mod tests {
             cpu.exec_opcode(&mut any_devices(), opcode(Opcode::Dup)),
             Ok(false)
         );
-        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
-        assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(1))));
+        assert_eq!(
+            cpu.stack.pop(Location::default()),
+            Ok(Value::Numeric(Number::Int(1)))
+        );
+        assert_eq!(
+            cpu.stack.pop(Location::default()),
+            Ok(Value::Numeric(Number::Int(1)))
+        );
     }
 
     #[test]
@@ -184,11 +189,11 @@ mod tests {
         let mut devices = MockDevices::new();
         devices
             .expect_call_api()
-            .withf(|device_type, api_op, _| {
+            .withf(|device_type, api_op, _, _| {
                 *device_type == DeviceType::Console && *api_op == ConsoleApi::Log as u8
             })
             .times(1)
-            .returning(|_, _, _| Ok(false));
+            .returning(|_, _, _, _| Ok(false));
         let res = cpu.exec_opcode(
             &mut devices,
             opcode(Opcode::Device(DeviceType::Console, ConsoleApi::Log as u8)),
