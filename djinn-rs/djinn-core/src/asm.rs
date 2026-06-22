@@ -35,6 +35,12 @@ impl fmt::Display for ProcessType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ProcessId(pub u32);
 
+impl fmt::Display for ProcessId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Instruction {
     pub opcode: Opcode,

@@ -1,13 +1,13 @@
-use super::Result;
-use super::cpu::Cpu;
+use super::cpu::{Context, Cpu};
 use crate::asm::{Instruction, ProcessId, ProcessType};
-use crate::vm::Devices;
+use crate::vm::{Devices, ProcessSignaler, Result};
 
+mod controller;
+pub use controller::Controller;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Status {
-    // TODO: waiting state later, when we have a proper process scheduler
     Running,
     Terminated,
 }
@@ -39,9 +39,13 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick(&mut self, devices: &mut impl Devices, instructions: &[Instruction]) -> Result<()> {
+    pub fn tick<'a, D: Devices, S: ProcessSignaler>(
+        &mut self,
+        ctx: &mut Context<'a, D, S>,
+        instructions: &[Instruction],
+    ) -> Result<()> {
         while let Some(instruction) = self.cpu.read_opcode(instructions) {
-            let yielded = self.cpu.exec_opcode(devices, instruction)?;
+            let yielded = self.cpu.exec_opcode(ctx, instruction)?;
             if yielded {
                 return Ok(());
             }

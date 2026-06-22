@@ -1,19 +1,21 @@
 mod cpu;
 mod process;
 
-use crate::asm::{Instruction, ProcessId, ProcessType, Value};
+use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
-use process::{Process, Status};
+use cpu::Context;
+use process::{Controller, Process, Status};
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
     #[cfg_attr(test, mockall::concretize)]
-    fn call_api<S: Stacked>(
+    fn call_api<S: ValueStack>(
         &mut self,
         device_type: DeviceType,
         api_op: u8,
-        cpu: &mut S,
+        stack: &mut S,
+        location: Location,
     ) -> Result<bool>;
     fn video_buffer(&self) -> &[u8];
     fn stdout(&self) -> &[String];
@@ -21,9 +23,9 @@ pub trait Devices {
 }
 
 #[cfg_attr(test, mockall::automock)]
-pub trait Stacked {
-    fn push_stack(&mut self, value: Value);
-    fn pop_stack(&mut self) -> Result<Value>;
+pub trait ValueStack {
+    fn push(&mut self, value: Value);
+    fn pop(&mut self, location: Location) -> Result<Value>;
 }
 
 pub trait InstructionProvider {
@@ -34,7 +36,12 @@ pub struct Machine<D: Devices, R: InstructionProvider> {
     devices: D,
     rom: R,
     processes: Vec<Process>,
-    next_process_id: u32,
+    process_controller: Controller,
+}
+
+#[cfg_attr(test, mockall::automock)]
+pub trait ProcessSignaler {
+    fn spawn(&mut self, process_type: ProcessType) -> ProcessId;
 }
 
 impl<D: Devices, R: InstructionProvider> Machine<D, R> {
@@ -43,24 +50,32 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
             devices,
             rom,
             processes: vec![],
-            next_process_id: 1,
+            process_controller: Controller::new(),
         };
 
         // spawn main process
-        res.spawn_process(ProcessType(1));
+        res.process_controller.spawn(ProcessType(1));
+        res.poll_process_controller();
         res
     }
 
     pub fn tick(&mut self) -> Result<bool> {
-        self.devices.clear_stdout();
+        let mut ctx = Context {
+            devices: &mut self.devices,
+            signaler: &mut self.process_controller,
+        };
 
+        ctx.devices.clear_stdout();
+
+        // tick every running process
         for process in &mut self.processes {
-            process.tick(
-                &mut self.devices,
-                self.rom.instructions(process.process_type())?,
-            )?;
+            process.tick(&mut ctx, self.rom.instructions(process.process_type())?)?;
         }
 
+        // check for newly spawned or killed processes
+        self.poll_process_controller();
+
+        // we halt if there are no processes or all processes are terminated
         let shall_halt = self.processes.is_empty()
             || self
                 .processes
@@ -74,24 +89,26 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
         &self.devices
     }
 
-    fn spawn_process(&mut self, process_type: ProcessType) {
-        self.processes
-            .push(Process::new(ProcessId(self.next_process_id), process_type));
-        self.next_process_id += 1;
+    fn poll_process_controller(&mut self) {
+        // drain and add spawned processes to the general process list
+        self.processes.append(self.process_controller.spawned_mut());
+        // TODO: kill terminated processes
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{ProcessDefinition, ProcessType};
+    use crate::asm::{Opcode, ProcessDefinition, ProcessType};
     use crate::cart::Rom;
+    use std::collections::HashMap;
 
     fn any_devices() -> impl Devices {
         let mut devices = MockDevices::new();
-        devices.expect_call_api().returning(|_, _, _| Ok(false));
+        devices.expect_call_api().returning(|_, _, _, _| Ok(false));
         devices.expect_video_buffer().return_const(Vec::<u8>::new());
         devices.expect_stdout().return_const(vec![]);
+        devices.expect_clear_stdout().returning(|| ());
         devices
     }
 
@@ -118,17 +135,32 @@ mod tests {
     }
 
     #[test]
-    fn test_spawn_process() {
-        let rom = any_rom(vec![(
-            ProcessType(2),
-            ProcessDefinition::new(ProcessType(2), vec![]),
-        )]);
+    fn test_tick_spawns_new_processes() {
+        let rom = Rom::new(HashMap::from([
+            (
+                ProcessType(1),
+                ProcessDefinition::new(
+                    ProcessType(1),
+                    vec![Instruction::new(
+                        Opcode::Spawn(ProcessType(2)),
+                        Location::default(),
+                    )],
+                ),
+            ),
+            (
+                ProcessType(2),
+                ProcessDefinition::new(ProcessType(2), vec![]),
+            ),
+        ]));
 
         let mut machine = any_machine_with_rom(rom);
-        machine.spawn_process(ProcessType(2));
+        assert_eq!(machine.processes.len(), 1);
+        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
+
+        assert_eq!(machine.tick(), Ok(false));
 
         assert_eq!(machine.processes.len(), 2);
-        assert_eq!(machine.processes[0].process_type(), ProcessType(1));
         assert_eq!(machine.processes[1].process_type(), ProcessType(2));
+        assert_eq!(machine.process_controller.spawned_mut().len(), 0);
     }
 }

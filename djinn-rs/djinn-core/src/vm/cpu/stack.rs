@@ -1,4 +1,6 @@
-use crate::asm::Value;
+use crate::asm::{Location, Value};
+use crate::error::{Result, RuntimeError};
+use crate::vm::ValueStack;
 
 pub struct Stack {
     items: Vec<Value>,
@@ -9,17 +11,23 @@ impl Stack {
         Self { items: vec![] }
     }
 
-    pub fn push(&mut self, value: Value) {
-        self.items.push(value);
-    }
-
-    pub fn pop(&mut self) -> Option<Value> {
-        self.items.pop()
-    }
-
     #[cfg(test)]
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
+    }
+}
+
+impl ValueStack for Stack {
+    fn push(&mut self, value: Value) {
+        self.items.push(value);
+    }
+
+    fn pop(&mut self, location: Location) -> Result<Value> {
+        let value = self
+            .items
+            .pop()
+            .ok_or(RuntimeError::StackUnderflow(location))?;
+        Ok(value)
     }
 }
 

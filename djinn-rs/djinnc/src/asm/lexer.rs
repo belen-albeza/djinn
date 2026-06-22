@@ -150,6 +150,7 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         // process control
         "noop" => Some(TokenKind::NoOp),
         "yld" => Some(TokenKind::Yield),
+        "spwn" => Some(TokenKind::Spawn),
         // device
         "dev" => Some(TokenKind::Dev),
         // stack
@@ -242,6 +243,7 @@ yld ;actual opcode
         let opcodes = vec![
             ("noop", TokenKind::NoOp),
             ("yld", TokenKind::Yield),
+            ("spwn", TokenKind::Spawn),
             ("push", TokenKind::Push),
             ("pop", TokenKind::Pop),
             ("dup", TokenKind::Dup),

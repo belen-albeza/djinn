@@ -11,7 +11,7 @@ use alias::Alias;
 pub struct StatementNode {
     pub raw_opcode: Opcode,
     pub location: Location,
-    // TODO: args
+    pub raw_args: Vec<String>,
 }
 
 impl StatementNode {
@@ -19,6 +19,14 @@ impl StatementNode {
         Self {
             raw_opcode,
             location,
+            raw_args: vec![],
+        }
+    }
+
+    pub fn with_args(self, args: Vec<String>) -> Self {
+        Self {
+            raw_args: args,
+            ..self
         }
     }
 }
@@ -55,7 +63,9 @@ impl Parser {
 
         let (location, name, process_type) = self.parse_process_declaration(lexer, analyzer)?;
 
-        let instructions = self.parse_statements(lexer)?;
+        let mut instructions = self.parse_statements(lexer)?;
+
+        analyzer.fill_args(&mut instructions)?;
 
         Ok(Some(ProcessNode {
             instructions,
@@ -91,6 +101,12 @@ impl Parser {
             return Ok(Some(token));
         }
         Ok(None)
+    }
+
+    fn consume_process_alias(&mut self, lexer: &mut Lexer) -> Result<String> {
+        self.consume(lexer, &[TokenKind::Tilde])?;
+        let id = self.consume(lexer, &[TokenKind::Id])?;
+        Ok(id.lexeme)
     }
 
     fn consume_value_or_alias(&mut self, lexer: &mut Lexer) -> Result<Value> {
@@ -165,6 +181,7 @@ impl Parser {
         match token.kind {
             TokenKind::NoOp => Ok(Some(StatementNode::new(Opcode::NoOp, token.location))),
             TokenKind::Yield => Ok(Some(StatementNode::new(Opcode::Yield, token.location))),
+            TokenKind::Spawn => self.parse_spawn(lexer, token.location),
             TokenKind::Dev => self.parse_dev_call(lexer, token.location),
             TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
@@ -193,6 +210,17 @@ impl Parser {
                 expected: vec![],
             }),
         }
+    }
+
+    fn parse_spawn(
+        &mut self,
+        lexer: &mut Lexer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let alias = self.consume_process_alias(lexer)?;
+        Ok(Some(
+            StatementNode::new(Opcode::Spawn(ProcessType(0)), location).with_args(vec![alias]),
+        ))
     }
 
     fn parse_push(

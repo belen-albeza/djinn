@@ -1,4 +1,4 @@
-use crate::asm::Location;
+use crate::asm::{Location, ProcessId};
 use crate::error::{Result, RuntimeError};
 use std::cmp::Ordering;
 use std::fmt;
@@ -120,6 +120,7 @@ impl fmt::Display for Number {
 pub enum Value {
     Numeric(Number),
     Bool(bool),
+    Process(ProcessId),
 }
 
 impl Value {
@@ -128,6 +129,7 @@ impl Value {
             Value::Bool(x) => *x,
             Value::Numeric(Number::Int(x)) => *x != 0,
             Value::Numeric(Number::Float(x)) => *x != 0.0,
+            Value::Process(x) => *x != ProcessId(0),
         }
     }
 
@@ -155,6 +157,7 @@ impl fmt::Display for Value {
         match self {
             Value::Numeric(number) => write!(f, "{}", number),
             Value::Bool(bool) => write!(f, "{}", bool),
+            Value::Process(process_id) => write!(f, "{}", process_id),
         }
     }
 }
@@ -164,7 +167,7 @@ impl TryFrom<Value> for Number {
     fn try_from(value: Value) -> Result<Self> {
         match value {
             Value::Numeric(number) => Ok(number),
-            Value::Bool(_) => Err(RuntimeError::TypeError(
+            _ => Err(RuntimeError::TypeError(
                 Location::default(),
                 format!("`{}` is not a number", value),
             )),

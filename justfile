@@ -6,7 +6,10 @@ clean:
 build-wasm:
     wasm-pack build djinn-rs/djinn-dev-wasm --out-dir ../../packages/djinn-dev-wasm
 
-test-wasm:
+lint-wasm:
+    cargo clippy --manifest-path djinn-rs/Cargo.toml
+
+test-wasm: lint-wasm
     cargo test --manifest-path djinn-rs/Cargo.toml
 
 dev: build-wasm
