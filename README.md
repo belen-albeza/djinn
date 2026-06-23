@@ -9,6 +9,18 @@ Djinn is a fantasy console to make lo-fi games, inspired by PICO-8, Varvara, DIV
 - [`wasm-pack`](https://wasm-bindgen.github.io/wasm-pack/installer/) 0.15.0
 - [`just`](https://github.com/casey/just) 1.52.0
 
+## Build
+
+Install dependencies with:
+
+```zsh
+bun install
+cd djinn-ide && bun install
+```
+
+Then `just build` to build the project. For development builds with a watcher, run `just dev`
+
+
 ## License
 
 © 2026 Belén Albeza.

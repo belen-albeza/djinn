@@ -63,7 +63,7 @@ impl Parser {
 
         let (location, name, process_type) = self.parse_process_declaration(lexer, analyzer)?;
 
-        let mut instructions = self.parse_statements(lexer)?;
+        let mut instructions = self.parse_statements(lexer, analyzer)?;
 
         analyzer.fill_args(&mut instructions)?;
 
@@ -144,6 +144,14 @@ impl Parser {
         Ok(alias.0)
     }
 
+    fn consume_local(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<(String, u32)> {
+        self.consume(lexer, &[TokenKind::Dollar])?;
+        let id = self.consume(lexer, &[TokenKind::Id])?;
+        let index = analyzer.add_local(&self.current_process, id.lexeme.to_owned())?;
+
+        Ok((id.lexeme, index))
+    }
+
     fn parse_process_declaration(
         &mut self,
         lexer: &mut Lexer,
@@ -160,9 +168,9 @@ impl Parser {
         Ok((tilde.location, identifier.lexeme, process_type))
     }
 
-    fn parse_statements(&mut self, lexer: &mut Lexer) -> Result<Vec<StatementNode>> {
+    fn parse_statements(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<Vec<StatementNode>> {
         let mut res = Vec::new();
-        while let Some(statement) = self.parse_single_statement(lexer)? {
+        while let Some(statement) = self.parse_single_statement(lexer, analyzer)? {
             res.push(statement);
             // TODO: increment pc for labels
         }
@@ -170,7 +178,7 @@ impl Parser {
         Ok(res)
     }
 
-    fn parse_single_statement(&mut self, lexer: &mut Lexer) -> Result<Option<StatementNode>> {
+    fn parse_single_statement(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<Option<StatementNode>> {
         // stop at process declaration or EOF
         let peeked = lexer.peek_token()?;
         if peeked.kind == TokenKind::Tilde || peeked.kind == TokenKind::Eof {
@@ -186,6 +194,7 @@ impl Parser {
             TokenKind::Dev => self.parse_dev_call(lexer, token.location),
             TokenKind::Pop => Ok(Some(StatementNode::new(Opcode::Pop, token.location))),
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
+            TokenKind::Stl => self.parse_store_local(lexer, analyzer, token.location),
             TokenKind::Push => self.parse_push(lexer, token.location),
             TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             TokenKind::Not => Ok(Some(StatementNode::new(Opcode::Not, token.location))),
@@ -233,6 +242,16 @@ impl Parser {
         Ok(Some(StatementNode::new(Opcode::Push(value), location)))
     }
 
+    fn parse_store_local(
+        &mut self,
+        lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let (_, index) = self.consume_local(lexer, analyzer)?;
+        Ok(Some(StatementNode::new(Opcode::Stl(index), location)))
+    }
+
     fn parse_dev_call(
         &mut self,
         lexer: &mut Lexer,
@@ -275,8 +294,9 @@ mod tests {
     fn test_parse_opcode_with_value() {
         let mut lexer = Lexer::new("push true");
         let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
 
-        let statement = parser.parse_single_statement(&mut lexer).unwrap();
+        let statement = parser.parse_single_statement(&mut lexer, &mut analyzer).unwrap();
         assert_eq!(
             statement,
             Some(StatementNode::new(
@@ -290,8 +310,9 @@ mod tests {
     fn test_parse_hash_as_shortcut_for_push() {
         let mut lexer = Lexer::new("#1.234");
         let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
 
-        let statement = parser.parse_single_statement(&mut lexer).unwrap();
+        let statement = parser.parse_single_statement(&mut lexer, &mut analyzer).unwrap();
         assert_eq!(
             statement,
             Some(StatementNode::new(

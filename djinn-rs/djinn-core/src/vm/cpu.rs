@@ -67,6 +67,12 @@ impl Cpu {
                 self.push_stack(value);
                 Ok(false)
             }
+            Opcode::Stl(_index) => {
+                unimplemented!()
+            }
+            Opcode::Ldl(_index) => {
+                unimplemented!()
+            }
             Opcode::Not => self.exec_opcode_not(),
             Opcode::And => self.exec_opcode_and(),
             Opcode::Or => self.exec_opcode_or(),

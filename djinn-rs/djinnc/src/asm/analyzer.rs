@@ -5,8 +5,19 @@ use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result};
 
 #[derive(Debug, Clone, PartialEq)]
 struct ProcessMetadata {
-    location: Location,
-    process_type: ProcessType,
+    pub location: Location,
+    pub process_type: ProcessType,
+    pub locals: HashMap<String, u32>,
+}
+
+impl ProcessMetadata {
+    pub fn new(location: Location, process_type: ProcessType) -> Self {
+        Self {
+            location,
+            process_type,
+            locals: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -31,13 +42,18 @@ impl Analyzer {
 
         let process_type = self.process_type_for(name);
 
-        let metadata = ProcessMetadata {
-            location,
-            process_type,
-        };
+        let metadata = ProcessMetadata::new(location, process_type);
 
         self.processes.insert(name.to_string(), metadata);
         Ok(process_type)
+    }
+
+    pub fn add_local(&mut self, process_alias: &str, local: String) -> Result<u32> {
+        let process = self.processes.get_mut(process_alias).expect("Process does not exist");
+        let count = process.locals.len() as u32;
+        let index = process.locals.entry(local).or_insert(count);
+
+        Ok(*index)
     }
 
     pub fn check_main_process_exists(&self, location: Location) -> Result<()> {

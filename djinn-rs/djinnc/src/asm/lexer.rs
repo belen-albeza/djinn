@@ -60,6 +60,7 @@ impl<'a> Lexer<'a> {
                 ':' => TokenKind::Colon,
                 '~' => TokenKind::Tilde,
                 '#' => TokenKind::Hash,
+                '$' => TokenKind::Dollar,
                 // multi-char tokens
                 _ if x.is_ascii_digit() || x == '-' => self.scan_number_literal()?,
                 _ if x.is_alphabetic() => self.scan_identifier_or_opcode()?,
@@ -158,6 +159,9 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "push" => Some(TokenKind::Push),
         "pop" => Some(TokenKind::Pop),
         "dup" => Some(TokenKind::Dup),
+        // vars
+        "stl" => Some(TokenKind::Stl),
+        "ldl" => Some(TokenKind::Ldl),
         // values
         "true" => Some(TokenKind::Bool(true)),
         "false" => Some(TokenKind::Bool(false)),
@@ -249,6 +253,8 @@ yld ;actual opcode
             ("push", TokenKind::Push),
             ("pop", TokenKind::Pop),
             ("dup", TokenKind::Dup),
+            ("stl", TokenKind::Stl),
+            ("ldl", TokenKind::Ldl),
             ("not", TokenKind::Not),
             ("and", TokenKind::And),
             ("or", TokenKind::Or),
