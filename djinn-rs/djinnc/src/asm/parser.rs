@@ -144,7 +144,7 @@ impl Parser {
         Ok(alias.0)
     }
 
-    fn consume_local(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<(String, u32)> {
+    fn consume_local(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<(String, usize)> {
         self.consume(lexer, &[TokenKind::Dollar])?;
         let id = self.consume(lexer, &[TokenKind::Id])?;
         let index = analyzer.add_local(&self.current_process, id.lexeme.to_owned())?;

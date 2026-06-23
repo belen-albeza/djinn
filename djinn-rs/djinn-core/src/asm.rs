@@ -32,7 +32,7 @@ impl fmt::Display for ProcessType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct ProcessId(pub u32);
 
 impl fmt::Display for ProcessId {

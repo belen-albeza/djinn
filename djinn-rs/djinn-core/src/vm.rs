@@ -1,11 +1,13 @@
 mod cpu;
 mod process;
+pub mod memory;
 
 use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use cpu::Context;
 use process::{Controller, Process, Status};
+
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
@@ -32,26 +34,35 @@ pub trait InstructionProvider {
     fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]>;
 }
 
-pub struct Machine<D: Devices, R: InstructionProvider> {
-    devices: D,
-    rom: R,
-    processes: Vec<Process>,
-    process_controller: Controller,
-}
-
 #[cfg_attr(test, mockall::automock)]
 pub trait ProcessSignaler {
     fn spawn(&mut self, process_type: ProcessType) -> ProcessId;
     fn kill(&mut self, process_id: ProcessId);
 }
 
-impl<D: Devices, R: InstructionProvider> Machine<D, R> {
-    pub fn new(devices: D, rom: R) -> Self {
+#[cfg_attr(test, mockall::automock)]
+pub trait Memory {
+    fn poke(&mut self, id: ProcessId,address: usize, value: Value) -> Result<()>;
+    fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
+}
+
+pub struct Machine<D: Devices, R: InstructionProvider, M: Memory> {
+    devices: D,
+    rom: R,
+    processes: Vec<Process>,
+    process_controller: Controller,
+    locals: M,
+}
+
+
+impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
+    pub fn new(devices: D, rom: R, locals: M) -> Self {
         let mut res = Self {
             devices,
             rom,
             processes: vec![],
             process_controller: Controller::new(),
+            locals,
         };
 
         // spawn main process
@@ -64,6 +75,7 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
         let mut ctx = Context {
             devices: &mut self.devices,
             signaler: &mut self.process_controller,
+            locals: &mut self.locals,
         };
 
         ctx.devices.clear_stdout();
@@ -110,7 +122,7 @@ impl<D: Devices, R: InstructionProvider> Machine<D, R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{Opcode, ProcessDefinition, ProcessType};
+    use crate::asm::{Opcode, ProcessDefinition, ProcessType, Number};
     use crate::cart::Rom;
     use std::collections::HashMap;
 
@@ -132,10 +144,17 @@ mod tests {
         Rom::new(with_main.into_iter().collect())
     }
 
+    fn any_memory() -> impl Memory {
+        let mut memory = MockMemory::new();
+        memory.expect_poke().returning(|__, _, _| Ok(()));
+        memory.expect_peek().returning(|__, _| Ok(Value::Numeric(Number::Int(0))));
+        memory
+    }
+
     fn any_machine_with_rom(
         r: impl InstructionProvider,
-    ) -> Machine<impl Devices, impl InstructionProvider> {
-        Machine::new(any_devices(), r)
+    ) -> Machine<impl Devices, impl InstructionProvider, impl Memory> {
+        Machine::new(any_devices(), r, any_memory())
     }
 
     #[test]
@@ -226,7 +245,7 @@ mod tests {
         devices.expect_stdout().return_const(vec![]);
         devices.expect_clear_stdout().returning(|| ());
 
-        let mut machine = Machine::new(devices, rom);
+        let mut machine = Machine::new(devices, rom, any_memory());
 
         // Frame 1: only process #1 exists; it spawns #2 but it starts next frame.
         machine.tick().unwrap();
@@ -268,7 +287,7 @@ mod tests {
         ]));
 
         // Frame 1: process #1 spawns #2, then yields
-        let mut machine = Machine::new(any_devices(), rom);
+        let mut machine = Machine::new(any_devices(), rom, any_memory());
         machine.tick().unwrap();
         assert_eq!(machine.processes.len(), 2);
 
