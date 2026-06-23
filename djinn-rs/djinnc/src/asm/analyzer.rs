@@ -49,7 +49,10 @@ impl Analyzer {
     }
 
     pub fn add_local(&mut self, process_alias: &str, local: String) -> Result<usize> {
-        let process = self.processes.get_mut(process_alias).expect("Process does not exist");
+        let process = self
+            .processes
+            .get_mut(process_alias)
+            .expect("Process does not exist");
         let count = process.locals.len();
         let index = process.locals.entry(local).or_insert(count);
 

@@ -33,7 +33,9 @@ impl RuntimeError {
             RuntimeError::StackUnderflow(_) => RuntimeError::StackUnderflow(location),
             RuntimeError::TypeError(_, message) => RuntimeError::TypeError(location, message),
             RuntimeError::DivisionByZero(_) => RuntimeError::DivisionByZero(location),
-            RuntimeError::LocalNotFound(_, id, addr) => RuntimeError::LocalNotFound(location, id, addr),
+            RuntimeError::LocalNotFound(_, id, addr) => {
+                RuntimeError::LocalNotFound(location, id, addr)
+            }
             _ => self,
         }
     }

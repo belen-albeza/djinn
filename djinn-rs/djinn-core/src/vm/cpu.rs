@@ -78,8 +78,13 @@ impl Cpu {
                     .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
                 Ok(false)
             }
-            Opcode::Ldl(_index) => {
-                unimplemented!()
+            Opcode::Ldl(addr) => {
+                let value = ctx
+                    .locals
+                    .peek(self.id, addr)
+                    .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+                self.push_stack(value);
+                Ok(false)
             }
             Opcode::Not => self.exec_opcode_not(),
             Opcode::And => self.exec_opcode_and(),
@@ -129,6 +134,8 @@ mod tests {
     use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
     use crate::devices::{ConsoleApi, DeviceType};
     use crate::vm::{MockDevices, MockMemory, MockProcessSignaler};
+
+    use mockall::predicate::*;
 
     fn any_cpu() -> Cpu {
         Cpu::default()
@@ -291,6 +298,76 @@ mod tests {
             cpu.stack.pop(Location::default()),
             Ok(Value::Numeric(Number::Int(1)))
         );
+    }
+
+    #[test]
+    fn test_ldl_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockMemory::new();
+        memory
+            .expect_peek()
+            .with(eq(cpu.id), eq(3))
+            .times(1)
+            .returning(|_, _| Ok(Value::Numeric(Number::Int(42))));
+        env.locals = memory;
+
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Ldl(3))),
+            Ok(false)
+        );
+        assert_eq!(
+            cpu.stack.pop(Location::default()),
+            Ok(Value::Numeric(Number::Int(42)))
+        );
+    }
+
+    #[test]
+    fn test_ldl_with_invalid_address() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockMemory::new();
+        memory.expect_peek().returning(|_, _| {
+            Err(RuntimeError::LocalNotFound(
+                Location::default(),
+                ProcessId(1),
+                3,
+            ))
+        });
+        env.locals = memory;
+
+        assert_eq!(
+            cpu.exec_opcode(
+                &mut env.context(),
+                Instruction::new(Opcode::Ldl(3), Location { line: 2, column: 3 })
+            ),
+            Err(RuntimeError::LocalNotFound(
+                Location { line: 2, column: 3 },
+                ProcessId(1),
+                3
+            ))
+        );
+    }
+
+    #[test]
+    fn test_stl_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockMemory::new();
+        memory
+            .expect_poke()
+            .with(eq(cpu.id), eq(3), eq(Value::Numeric(Number::Int(42))))
+            .times(1)
+            .returning(|_, _, _| Ok(()));
+        env.locals = memory;
+
+        cpu.push_stack(Value::Numeric(Number::Int(42)));
+
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Stl(3))),
+            Ok(false)
+        );
+        assert!(cpu.stack.is_empty());
     }
 
     #[test]

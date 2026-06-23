@@ -1,13 +1,12 @@
 mod cpu;
-mod process;
 pub mod memory;
+mod process;
 
 use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use cpu::Context;
 use process::{Controller, Process, Status};
-
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Devices {
@@ -42,7 +41,7 @@ pub trait ProcessSignaler {
 
 #[cfg_attr(test, mockall::automock)]
 pub trait Memory {
-    fn poke(&mut self, id: ProcessId,address: usize, value: Value) -> Result<()>;
+    fn poke(&mut self, id: ProcessId, address: usize, value: Value) -> Result<()>;
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
 }
 
@@ -53,7 +52,6 @@ pub struct Machine<D: Devices, R: InstructionProvider, M: Memory> {
     process_controller: Controller,
     locals: M,
 }
-
 
 impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
     pub fn new(devices: D, rom: R, locals: M) -> Self {
@@ -122,7 +120,7 @@ impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{Opcode, ProcessDefinition, ProcessType, Number};
+    use crate::asm::{Number, Opcode, ProcessDefinition, ProcessType};
     use crate::cart::Rom;
     use std::collections::HashMap;
 
@@ -147,7 +145,9 @@ mod tests {
     fn any_memory() -> impl Memory {
         let mut memory = MockMemory::new();
         memory.expect_poke().returning(|__, _, _| Ok(()));
-        memory.expect_peek().returning(|__, _| Ok(Value::Numeric(Number::Int(0))));
+        memory
+            .expect_peek()
+            .returning(|__, _| Ok(Value::Numeric(Number::Int(0))));
         memory
     }
 
