@@ -7,7 +7,7 @@ use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result};
 struct ProcessMetadata {
     pub location: Location,
     pub process_type: ProcessType,
-    pub locals: HashMap<String, u32>,
+    pub locals: HashMap<String, usize>,
 }
 
 impl ProcessMetadata {
@@ -48,9 +48,9 @@ impl Analyzer {
         Ok(process_type)
     }
 
-    pub fn add_local(&mut self, process_alias: &str, local: String) -> Result<u32> {
+    pub fn add_local(&mut self, process_alias: &str, local: String) -> Result<usize> {
         let process = self.processes.get_mut(process_alias).expect("Process does not exist");
-        let count = process.locals.len() as u32;
+        let count = process.locals.len();
         let index = process.locals.entry(local).or_insert(count);
 
         Ok(*index)

@@ -192,12 +192,16 @@ impl Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::asm::{Location, Number, Value};
+    use crate::asm::{Location, Number, ProcessId, Value};
     use crate::vm::RuntimeError;
+
+    fn any_cpu() -> Cpu {
+        Cpu::new(ProcessId::default())
+    }
 
     #[test]
     fn test_not_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_not(), Ok(false));
         assert_eq!(cpu.pop_stack(), Ok(Value::Bool(false)));
@@ -209,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_and_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_and(), Ok(false));
@@ -218,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_and_opcode_with_numeric_values() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         cpu.push_stack(Value::Numeric(Number::Float(0.0)));
         assert_eq!(cpu.exec_opcode_and(), Ok(false));
@@ -227,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_and_opcode_with_mixed_values() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(cpu.exec_opcode_and(), Ok(false));
@@ -236,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_and_opcode_with_stack_underflow() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         assert_eq!(
             cpu.exec_opcode_and(),
@@ -246,7 +250,7 @@ mod tests {
 
     #[test]
     fn test_or_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_or(), Ok(false));
@@ -255,7 +259,7 @@ mod tests {
 
     #[test]
     fn test_xor_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_xor(), Ok(false));
@@ -264,7 +268,7 @@ mod tests {
 
     #[test]
     fn test_add_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         cpu.push_stack(Value::Numeric(Number::Float(2.0)));
         assert_eq!(cpu.exec_opcode_add(), Ok(false));
@@ -273,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_add_opcode_returns_type_error() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(
@@ -287,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_sub_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(-1)));
         cpu.push_stack(Value::Numeric(Number::Float(2.0)));
         assert_eq!(cpu.exec_opcode_sub(), Ok(false));
@@ -296,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_mul_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         cpu.push_stack(Value::Numeric(Number::Int(3)));
         assert_eq!(cpu.exec_opcode_mul(), Ok(false));
@@ -305,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_div_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(6)));
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         assert_eq!(cpu.exec_opcode_div(), Ok(false));
@@ -314,7 +318,7 @@ mod tests {
 
     #[test]
     fn test_div_opcode_returns_division_by_zero_error() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Float(1.0)));
         cpu.push_stack(Value::Numeric(Number::Int(0)));
         assert_eq!(
@@ -325,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_rem_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(6)));
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         assert_eq!(cpu.exec_opcode_rem(), Ok(false));
@@ -334,7 +338,7 @@ mod tests {
 
     #[test]
     fn test_rem_opcode_returns_division_by_zero_error() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Float(1.0)));
         cpu.push_stack(Value::Numeric(Number::Int(0)));
         assert_eq!(
@@ -345,7 +349,7 @@ mod tests {
 
     #[test]
     fn test_inc_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(cpu.exec_opcode_inc(), Ok(false));
         assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(2))));
@@ -353,7 +357,7 @@ mod tests {
 
     #[test]
     fn test_dec_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(cpu.exec_opcode_dec(), Ok(false));
         assert_eq!(cpu.pop_stack(), Ok(Value::Numeric(Number::Int(0))));
@@ -361,7 +365,7 @@ mod tests {
 
     #[test]
     fn test_eq_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_eq(), Ok(false));
@@ -370,7 +374,7 @@ mod tests {
 
     #[test]
     fn test_eq_opcode_with_mixed_types() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(cpu.exec_opcode_eq(), Ok(false));
@@ -379,7 +383,7 @@ mod tests {
 
     #[test]
     fn test_eq_opcode_casts_ints_to_floats() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         cpu.push_stack(Value::Numeric(Number::Float(1.0)));
         assert_eq!(cpu.exec_opcode_eq(), Ok(false));
@@ -388,7 +392,7 @@ mod tests {
 
     #[test]
     fn test_neq_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Bool(true));
         cpu.push_stack(Value::Bool(true));
         assert_eq!(cpu.exec_opcode_neq(), Ok(false));
@@ -397,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_lt_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         assert_eq!(cpu.exec_opcode_lt(), Ok(false));
@@ -406,7 +410,7 @@ mod tests {
 
     #[test]
     fn test_leq_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         assert_eq!(cpu.exec_opcode_leq(), Ok(false));
@@ -415,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_gt_opcode() {
-        let mut cpu = Cpu::new();
+        let mut cpu = any_cpu();
         cpu.push_stack(Value::Numeric(Number::Int(2)));
         cpu.push_stack(Value::Numeric(Number::Int(1)));
         assert_eq!(cpu.exec_opcode_gt(), Ok(false));

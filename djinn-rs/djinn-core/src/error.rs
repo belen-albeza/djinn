@@ -1,4 +1,4 @@
-use crate::asm::{Location, ProcessType};
+use crate::asm::{Location, ProcessId, ProcessType};
 
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum RuntimeError {
@@ -12,6 +12,8 @@ pub enum RuntimeError {
     DivisionByZero(Location),
     #[error("Process {0} not found")]
     ProcessNotFound(ProcessType),
+    #[error("Unknown local address ${2} for process {1}")]
+    LocalNotFound(Location, ProcessId, usize),
 }
 
 impl RuntimeError {
@@ -22,6 +24,7 @@ impl RuntimeError {
             RuntimeError::DivisionByZero(location) => *location,
             RuntimeError::InvalidRom => Location::default(),
             RuntimeError::ProcessNotFound(_) => Location::default(),
+            RuntimeError::LocalNotFound(location, _, _) => *location,
         }
     }
 
@@ -30,6 +33,7 @@ impl RuntimeError {
             RuntimeError::StackUnderflow(_) => RuntimeError::StackUnderflow(location),
             RuntimeError::TypeError(_, message) => RuntimeError::TypeError(location, message),
             RuntimeError::DivisionByZero(_) => RuntimeError::DivisionByZero(location),
+            RuntimeError::LocalNotFound(_, id, addr) => RuntimeError::LocalNotFound(location, id, addr),
             _ => self,
         }
     }
