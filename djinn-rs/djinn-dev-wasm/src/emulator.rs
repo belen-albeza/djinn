@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 use djinn_core::cart::Rom;
 use djinn_core::devices::{DeviceSet, VIDEO_HEIGHT, VIDEO_WIDTH};
-use djinn_core::vm::{Devices, Machine};
+use djinn_core::vm::{Devices, Machine, memory::Locals};
 
 use crate::error::DjinnError;
 
@@ -33,14 +33,14 @@ const THEME: [(u8, u8, u8); 16] = [
 #[wasm_bindgen]
 pub struct Emulator {
     title: String,
-    vm: Machine<DeviceSet, Rom>,
+    vm: Machine<DeviceSet, Rom, Locals>,
 }
 
 impl Emulator {
     pub fn new(cart: djinnc::Cartridge) -> Self {
         Self {
             title: cart.title().to_string(),
-            vm: Machine::new(DeviceSet::default(), cart.rom().clone()),
+            vm: Machine::new(DeviceSet::default(), cart.rom().clone(), Locals::new()),
         }
     }
 

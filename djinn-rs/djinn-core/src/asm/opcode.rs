@@ -17,6 +17,9 @@ pub enum Opcode {
     Push(Value),
     Pop,
     Dup,
+    // Vars
+    Stl(usize),
+    Ldl(usize),
     // ALU
     Not,
     And,

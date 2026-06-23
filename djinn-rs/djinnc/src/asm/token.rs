@@ -8,6 +8,7 @@ pub enum TokenKind {
     Colon,
     Tilde,
     Hash,
+    Dollar,
     // Multi-char tokens
     Id,
     Int(i32),
@@ -24,6 +25,9 @@ pub enum TokenKind {
     Push,
     Pop,
     Dup,
+    // Local vars
+    Stl,
+    Ldl,
     // ALU
     Not,
     And,
@@ -52,6 +56,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Colon => write!(f, ":"),
             TokenKind::Tilde => write!(f, "~"),
             TokenKind::Hash => write!(f, "#"),
+            TokenKind::Dollar => write!(f, "$"),
             TokenKind::Id => write!(f, "Identifier"),
             TokenKind::Yield => write!(f, "YLD"),
             TokenKind::Int(_) => write!(f, "Int"),

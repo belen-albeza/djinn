@@ -1,6 +1,6 @@
 use super::cpu::{Context, Cpu};
 use crate::asm::{Instruction, ProcessId, ProcessType};
-use crate::vm::{Devices, ProcessSignaler, Result};
+use crate::vm::{Devices, Memory, ProcessSignaler, Result};
 
 mod controller;
 pub use controller::Controller;
@@ -31,7 +31,7 @@ pub struct Process {
 impl Process {
     pub fn new(id: ProcessId, process_type: ProcessType) -> Self {
         Self {
-            cpu: Cpu::new(),
+            cpu: Cpu::new(id),
             process_type,
             status: Status::Running,
             id,
@@ -39,9 +39,9 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick<'a, D: Devices, S: ProcessSignaler>(
+    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory>(
         &mut self,
-        ctx: &mut Context<'a, D, S>,
+        ctx: &mut Context<'a, D, S, M>,
         instructions: &[Instruction],
     ) -> Result<()> {
         while let Some(instruction) = self.cpu.read_opcode(instructions) {
