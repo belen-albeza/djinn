@@ -136,7 +136,7 @@ mod tests {
     fn any_rom(extra_processes: Vec<(ProcessType, ProcessDefinition)>) -> Rom {
         let with_main = extra_processes.into_iter().chain(vec![(
             ProcessType(1),
-            ProcessDefinition::new(ProcessType(1), vec![]),
+            ProcessDefinition::new(ProcessType(1), vec![], vec![]),
         )]);
 
         Rom::new(with_main.into_iter().collect())
@@ -175,11 +175,12 @@ mod tests {
                         Instruction::new(Opcode::Spawn(ProcessType(2)), Location::default()),
                         Instruction::new(Opcode::Yield, Location::default()),
                     ],
+                    vec![],
                 ),
             ),
             (
                 ProcessType(2),
-                ProcessDefinition::new(ProcessType(2), vec![]),
+                ProcessDefinition::new(ProcessType(2), vec![], vec![]),
             ),
         ]));
 
@@ -223,6 +224,7 @@ mod tests {
                         probe(1),
                         yield_(),
                     ],
+                    vec![],
                 ),
             ),
             (
@@ -230,6 +232,7 @@ mod tests {
                 ProcessDefinition::new(
                     ProcessType(2),
                     vec![probe(2), yield_(), probe(2), yield_()],
+                    vec![],
                 ),
             ),
         ]));
@@ -275,6 +278,7 @@ mod tests {
                         ),
                         Instruction::new(Opcode::Kill, Location::default()),
                     ],
+                    vec![],
                 ),
             ),
             (
@@ -282,6 +286,7 @@ mod tests {
                 ProcessDefinition::new(
                     ProcessType(2),
                     vec![Instruction::new(Opcode::Yield, Location::default())],
+                    vec![],
                 ),
             ),
         ]));

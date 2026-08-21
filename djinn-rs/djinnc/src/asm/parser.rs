@@ -37,6 +37,7 @@ pub struct ProcessNode {
     pub process_type: ProcessType,
     pub name: String,
     pub location: Location,
+    pub args: Vec<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -61,7 +62,7 @@ impl Parser {
             return Ok(None);
         }
 
-        let (location, name, process_type) = self.parse_process_declaration(lexer, analyzer)?;
+        let (location, name, process_type, args) = self.parse_process_declaration(lexer, analyzer)?;
 
         let mut instructions = self.parse_statements(lexer, analyzer)?;
 
@@ -72,6 +73,7 @@ impl Parser {
             process_type,
             name,
             location,
+            args,
         }))
     }
 
@@ -156,16 +158,24 @@ impl Parser {
         &mut self,
         lexer: &mut Lexer,
         analyzer: &mut Analyzer,
-    ) -> Result<(Location, String, ProcessType)> {
+    ) -> Result<(Location, String, ProcessType, Vec<usize>)> {
         let tilde = self.consume(lexer, &[TokenKind::Tilde])?;
 
         let identifier = self.consume(lexer, &[TokenKind::Id])?;
         self.current_process = identifier.lexeme.clone();
         let process_type = analyzer.add_process(&self.current_process, tilde.location)?;
 
+        // parse args
+        let mut args = Vec::new();
+        while lexer.peek_token()?.kind == TokenKind::Dollar {
+            let arg = self.consume_local(lexer, analyzer)?;
+            args.push(arg);
+        }
+
+
         self.consume(lexer, &[TokenKind::Colon])?;
 
-        Ok((tilde.location, identifier.lexeme, process_type))
+        Ok((tilde.location, identifier.lexeme, process_type, args))
     }
 
     fn parse_statements(
@@ -305,8 +315,26 @@ mod tests {
                 process_type: ProcessType(1),
                 name: "main".to_string(),
                 location: Location { line: 1, column: 1 },
+                args: vec![],
             })
         );
+    }
+
+    #[test]
+    fn test_parse_process_declaration_with_args() {
+        let mut lexer = Lexer::new("~ship $x $y $foo: noop");
+        let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
+
+        let process = parser.parse_process(&mut lexer, &mut analyzer).unwrap();
+        assert_eq!(process, Some(ProcessNode {
+            instructions: vec![StatementNode::new(Opcode::NoOp, Location { line: 1, column: 19 })],
+            process_type: ProcessType(2),
+            name: "ship".to_string(),
+            location: Location { line: 1, column: 1 },
+            // TODO: fix slotted indexes once we have built-in local s
+            args: vec![0, 1, 2],
+        }));
     }
 
     #[test]

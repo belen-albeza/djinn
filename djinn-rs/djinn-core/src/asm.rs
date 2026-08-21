@@ -57,13 +57,15 @@ impl Instruction {
 pub struct ProcessDefinition {
     process_type: ProcessType,
     instructions: Vec<Instruction>,
+    args: Vec<usize>,
 }
 
 impl ProcessDefinition {
-    pub fn new(process_type: ProcessType, instructions: Vec<Instruction>) -> Self {
+    pub fn new(process_type: ProcessType, instructions: Vec<Instruction>, args: Vec<usize>) -> Self {
         Self {
             process_type,
             instructions,
+            args,
         }
     }
 
@@ -73,5 +75,9 @@ impl ProcessDefinition {
 
     pub fn instructions(&self) -> &[Instruction] {
         &self.instructions
+    }
+
+    pub fn args(&self) -> &[usize] {
+        &self.args
     }
 }
