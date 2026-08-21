@@ -1,6 +1,6 @@
 use super::cpu::{Context, Cpu};
-use crate::asm::{Instruction, ProcessId, ProcessType};
-use crate::vm::{Devices, Memory, ProcessSignaler, Result};
+use crate::asm::{ProcessId, ProcessType};
+use crate::vm::{Devices, Memory, ProcessSignaler, Result, RomProvider};
 
 mod controller;
 pub use controller::Controller;
@@ -39,11 +39,12 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory>(
+    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory, R: RomProvider>(
         &mut self,
-        ctx: &mut Context<'a, D, S, M>,
-        instructions: &[Instruction],
+        ctx: &mut Context<'a, D, S, M, R>,
     ) -> Result<()> {
+        let instructions = ctx.rom.instructions(self.process_type)?;
+
         while let Some(instruction) = self.cpu.read_opcode(instructions) {
             let yielded = self.cpu.exec_opcode(ctx, instruction)?;
             if yielded {
@@ -63,6 +64,7 @@ impl Process {
         self.status = status;
     }
 
+    #[allow(unused)]
     pub fn process_type(&self) -> ProcessType {
         self.process_type
     }

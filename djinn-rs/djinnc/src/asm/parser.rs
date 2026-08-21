@@ -62,7 +62,8 @@ impl Parser {
             return Ok(None);
         }
 
-        let (location, name, process_type, args) = self.parse_process_declaration(lexer, analyzer)?;
+        let (location, name, process_type, args) =
+            self.parse_process_declaration(lexer, analyzer)?;
 
         let mut instructions = self.parse_statements(lexer, analyzer)?;
 
@@ -171,7 +172,6 @@ impl Parser {
             let arg = self.consume_local(lexer, analyzer)?;
             args.push(arg);
         }
-
 
         self.consume(lexer, &[TokenKind::Colon])?;
 
@@ -327,14 +327,23 @@ mod tests {
         let mut analyzer = Analyzer::new();
 
         let process = parser.parse_process(&mut lexer, &mut analyzer).unwrap();
-        assert_eq!(process, Some(ProcessNode {
-            instructions: vec![StatementNode::new(Opcode::NoOp, Location { line: 1, column: 19 })],
-            process_type: ProcessType(2),
-            name: "ship".to_string(),
-            location: Location { line: 1, column: 1 },
-            // TODO: fix slotted indexes once we have built-in local s
-            args: vec![0, 1, 2],
-        }));
+        assert_eq!(
+            process,
+            Some(ProcessNode {
+                instructions: vec![StatementNode::new(
+                    Opcode::NoOp,
+                    Location {
+                        line: 1,
+                        column: 19
+                    }
+                )],
+                process_type: ProcessType(2),
+                name: "ship".to_string(),
+                location: Location { line: 1, column: 1 },
+                // TODO: fix slotted indexes once we have built-in local s
+                args: vec![0, 1, 2],
+            })
+        );
     }
 
     #[test]

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::asm::{Instruction, ProcessDefinition, ProcessType};
 use crate::error::{Result, RuntimeError};
-use crate::vm::InstructionProvider;
+use crate::vm::RomProvider;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rom {
@@ -15,13 +15,21 @@ impl Rom {
     }
 }
 
-impl InstructionProvider for Rom {
+impl RomProvider for Rom {
     fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]> {
         let process = self
             .processes
             .get(&process_type)
             .ok_or(RuntimeError::ProcessNotFound(process_type))?;
         Ok(process.instructions())
+    }
+
+    fn args(&self, process_type: ProcessType) -> Result<&[usize]> {
+        let process = self
+            .processes
+            .get(&process_type)
+            .ok_or(RuntimeError::ProcessNotFound(process_type))?;
+        Ok(process.args())
     }
 }
 

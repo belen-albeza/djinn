@@ -61,7 +61,11 @@ pub struct ProcessDefinition {
 }
 
 impl ProcessDefinition {
-    pub fn new(process_type: ProcessType, instructions: Vec<Instruction>, args: Vec<usize>) -> Self {
+    pub fn new(
+        process_type: ProcessType,
+        instructions: Vec<Instruction>,
+        args: Vec<usize>,
+    ) -> Self {
         Self {
             process_type,
             instructions,

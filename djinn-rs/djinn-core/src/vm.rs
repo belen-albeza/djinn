@@ -29,8 +29,9 @@ pub trait ValueStack {
     fn pop(&mut self, location: Location) -> Result<Value>;
 }
 
-pub trait InstructionProvider {
+pub trait RomProvider {
     fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]>;
+    fn args(&self, process_type: ProcessType) -> Result<&[usize]>;
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -45,7 +46,7 @@ pub trait Memory {
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
 }
 
-pub struct Machine<D: Devices, R: InstructionProvider, M: Memory> {
+pub struct Machine<D: Devices, R: RomProvider, M: Memory> {
     devices: D,
     rom: R,
     processes: Vec<Process>,
@@ -53,7 +54,7 @@ pub struct Machine<D: Devices, R: InstructionProvider, M: Memory> {
     locals: M,
 }
 
-impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
+impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
     pub fn new(devices: D, rom: R, locals: M) -> Self {
         let mut res = Self {
             devices,
@@ -74,6 +75,7 @@ impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
             devices: &mut self.devices,
             signaler: &mut self.process_controller,
             locals: &mut self.locals,
+            rom: &self.rom,
         };
 
         ctx.devices.clear_stdout();
@@ -84,7 +86,7 @@ impl<D: Devices, R: InstructionProvider, M: Memory> Machine<D, R, M> {
                 continue;
             }
 
-            process.tick(&mut ctx, self.rom.instructions(process.process_type())?)?;
+            process.tick(&mut ctx)?;
         }
 
         // check for newly spawned or killed processes
@@ -152,8 +154,8 @@ mod tests {
     }
 
     fn any_machine_with_rom(
-        r: impl InstructionProvider,
-    ) -> Machine<impl Devices, impl InstructionProvider, impl Memory> {
+        r: impl RomProvider,
+    ) -> Machine<impl Devices, impl RomProvider, impl Memory> {
         Machine::new(any_devices(), r, any_memory())
     }
 
