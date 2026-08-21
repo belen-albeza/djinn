@@ -22,6 +22,7 @@ impl From<ProcessNode> for ProcessDefinition {
                 .into_iter()
                 .map(|statement| Instruction::new(statement.raw_opcode, statement.location))
                 .collect(),
+            process.args,
         )
     }
 }
@@ -75,7 +76,8 @@ mod tests {
                         vec![Instruction::new(
                             Opcode::NoOp,
                             Location { line: 2, column: 1 }
-                        ),]
+                        )],
+                        vec![],
                     )
                 ),
                 (
@@ -85,7 +87,8 @@ mod tests {
                         vec![Instruction::new(
                             Opcode::NoOp,
                             Location { line: 4, column: 1 }
-                        )]
+                        )],
+                        vec![],
                     )
                 ),
                 (
@@ -95,7 +98,8 @@ mod tests {
                         vec![Instruction::new(
                             Opcode::NoOp,
                             Location { line: 6, column: 1 }
-                        )]
+                        )],
+                        vec![],
                     )
                 ),
             ])))

@@ -2,6 +2,7 @@ use crate::asm::{Location, Value};
 use crate::error::{Result, RuntimeError};
 use crate::vm::ValueStack;
 
+#[derive(Debug)]
 pub struct Stack {
     items: Vec<Value>,
 }

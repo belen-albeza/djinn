@@ -16,11 +16,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: packages/djinn-dev-wasm
-          key: djinn-dev-wasm-${{ hashFiles('djinn-rs/**/*.rs', 'djinn-rs/**/Cargo.toml', 'djinn-rs/Cargo.lock') }}
+          key: djinn-dev-wasm-bn131-${{ hashFiles('djinn-rs/**/*.rs', 'djinn-rs/**/Cargo.toml', 'djinn-rs/Cargo.lock') }}
       - uses: dtolnay/rust-toolchain@stable
         if: steps.wasm-cache.outputs.cache-hit != 'true'
         with:
           targets: wasm32-unknown-unknown
+      - name: Install binaryen
+        if: steps.wasm-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL https://github.com/WebAssembly/binaryen/releases/download/version_131/binaryen-version_131-x86_64-linux.tar.gz \
+            | sudo tar -xz -C /usr/local --strip-components=1 binaryen-version_131/bin/wasm-opt
       - uses: jetli/wasm-pack-action@v0.4.0
         if: steps.wasm-cache.outputs.cache-hit != 'true'
       - name: Build wasm package
