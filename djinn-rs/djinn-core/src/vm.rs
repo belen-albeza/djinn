@@ -46,6 +46,7 @@ pub trait ProcessSignaler {
 pub trait Memory {
     fn poke(&mut self, id: ProcessId, address: usize, value: Value) -> Result<()>;
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
+    fn free(&mut self, id: ProcessId);
 }
 
 pub struct Machine<D: Devices, R: RomProvider, M: Memory> {
@@ -122,6 +123,12 @@ impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
             }
         }
 
+        // free memory slots of terminated processes
+        self.processes
+            .iter()
+            .filter(|process| process.status() == Status::Terminated)
+            .for_each(|process| self.locals.free(process.id()));
+
         // remove terminated processes
         self.processes
             .retain(|process| process.status() != Status::Terminated);
@@ -134,6 +141,7 @@ mod tests {
     use crate::asm::{Number, Opcode, ProcessDefinition, ProcessType};
     use crate::cart::Rom;
     use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
 
     fn any_devices() -> impl Devices {
         let mut devices = MockDevices::new();
@@ -159,13 +167,35 @@ mod tests {
         memory
             .expect_peek()
             .returning(|__, _| Ok(Value::Numeric(Number::Int(0))));
+        memory.expect_free().returning(|__| ());
         memory
+    }
+
+    fn tracking_memory() -> (MockMemory, Arc<Mutex<Vec<ProcessId>>>) {
+        let freed = Arc::new(Mutex::new(Vec::new()));
+        let mut memory = MockMemory::new();
+        memory.expect_poke().returning(|_, _, _| Ok(()));
+        memory
+            .expect_peek()
+            .returning(|_, _| Ok(Value::Numeric(Number::Int(0))));
+        let sink = freed.clone();
+        memory
+            .expect_free()
+            .returning(move |id| sink.lock().unwrap().push(id));
+        (memory, freed)
     }
 
     fn any_machine_with_rom(
         r: impl RomProvider,
     ) -> Machine<impl Devices, impl RomProvider, impl Memory> {
         Machine::new(any_devices(), r, any_memory())
+    }
+
+    fn any_machine_with_rom_and_memory(
+        r: impl RomProvider,
+        memory: impl Memory,
+    ) -> Machine<impl Devices, impl RomProvider, impl Memory> {
+        Machine::new(any_devices(), r, memory)
     }
 
     #[test]
@@ -310,5 +340,13 @@ mod tests {
         // Frame 2: process #1 kills #2, then terminates. Process #2 yields.
         machine.tick().unwrap();
         assert!(machine.processes.is_empty()); // no process remains
+    }
+
+    #[test]
+    fn test_terminated_processes_free_memory_slots() {
+        let (memory, freed) = tracking_memory();
+        let mut machine = any_machine_with_rom_and_memory(any_rom(vec![]), memory);
+        machine.tick().unwrap(); // empty main process terminates immediately
+        assert!(freed.lock().unwrap().contains(&ProcessId(1)));
     }
 }
