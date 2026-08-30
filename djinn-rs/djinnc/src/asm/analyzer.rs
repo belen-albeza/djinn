@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::asm::parser::StatementNode;
-use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result};
+use crate::asm::{AssemblerError, BUILTIN_LOCALS, Location, Opcode, ProcessType, Result};
 
 #[derive(Debug, Clone, PartialEq)]
 struct ProcessMetadata {
@@ -15,7 +15,11 @@ impl ProcessMetadata {
         Self {
             location,
             process_type,
-            locals: HashMap::new(),
+            locals: BUILTIN_LOCALS
+                .iter()
+                .enumerate()
+                .map(|(i, (name, _))| (name.to_string(), i))
+                .collect(),
         }
     }
 }

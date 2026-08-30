@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::asm::{Instruction, ProcessDefinition, ProcessType};
 use crate::error::{Result, RuntimeError};
@@ -16,7 +17,7 @@ impl Rom {
 }
 
 impl RomProvider for Rom {
-    fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]> {
+    fn instructions(&self, process_type: ProcessType) -> Result<Rc<[Instruction]>> {
         let process = self
             .processes
             .get(&process_type)
@@ -24,7 +25,7 @@ impl RomProvider for Rom {
         Ok(process.instructions())
     }
 
-    fn args(&self, process_type: ProcessType) -> Result<&[usize]> {
+    fn args(&self, process_type: ProcessType) -> Result<Rc<[usize]>> {
         let process = self
             .processes
             .get(&process_type)

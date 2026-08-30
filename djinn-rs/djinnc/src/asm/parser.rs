@@ -297,6 +297,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use djinn_core::asm::BUILTIN_LOCALS;
 
     #[test]
     fn test_parse_process_declaration() {
@@ -327,6 +328,7 @@ mod tests {
         let mut analyzer = Analyzer::new();
 
         let process = parser.parse_process(&mut lexer, &mut analyzer).unwrap();
+        let custom_locals_offset = BUILTIN_LOCALS.len();
         assert_eq!(
             process,
             Some(ProcessNode {
@@ -341,7 +343,7 @@ mod tests {
                 name: "ship".to_string(),
                 location: Location { line: 1, column: 1 },
                 // TODO: fix slotted indexes once we have built-in local s
-                args: vec![0, 1, 2],
+                args: vec![0, 1, custom_locals_offset],
             })
         );
     }

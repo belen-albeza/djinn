@@ -3,7 +3,6 @@ use std::sync::LazyLock;
 
 use crate::asm::{AssemblerError, Location, Result};
 
-// FIXME:
 static ALIASES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
     HashMap::from([
         // device types

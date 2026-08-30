@@ -1,7 +1,11 @@
 use std::fmt;
+use std::rc::Rc;
 
+mod builtins;
 mod opcode;
 mod value;
+
+pub use builtins::BUILTIN_LOCALS;
 pub use opcode::Opcode;
 pub use value::{Number, Value};
 
@@ -56,8 +60,8 @@ impl Instruction {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProcessDefinition {
     process_type: ProcessType,
-    instructions: Vec<Instruction>,
-    args: Vec<usize>,
+    instructions: Rc<[Instruction]>,
+    args: Rc<[usize]>,
 }
 
 impl ProcessDefinition {
@@ -68,8 +72,8 @@ impl ProcessDefinition {
     ) -> Self {
         Self {
             process_type,
-            instructions,
-            args,
+            instructions: instructions.into(),
+            args: args.into(),
         }
     }
 
@@ -77,11 +81,11 @@ impl ProcessDefinition {
         self.process_type
     }
 
-    pub fn instructions(&self) -> &[Instruction] {
-        &self.instructions
+    pub fn instructions(&self) -> Rc<[Instruction]> {
+        self.instructions.clone()
     }
 
-    pub fn args(&self) -> &[usize] {
-        &self.args
+    pub fn args(&self) -> Rc<[usize]> {
+        self.args.clone()
     }
 }

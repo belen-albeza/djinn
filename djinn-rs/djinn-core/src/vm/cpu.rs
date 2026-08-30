@@ -1,6 +1,6 @@
-use crate::asm::{Instruction, Location, Opcode, ProcessId, Value};
+use crate::asm::{BUILTIN_LOCALS, Instruction, Location, Opcode, ProcessId, Value};
 use crate::error::RuntimeError;
-use crate::vm::{Devices, Memory, RomProvider, ValueStack};
+use crate::vm::{Devices, Memory, ValueStack};
 use crate::vm::{ProcessSignaler, Result};
 
 pub(crate) mod stack;
@@ -8,11 +8,10 @@ use stack::Stack;
 mod opcodes_alu;
 
 #[derive(Debug)]
-pub struct Context<'a, D: Devices, S: ProcessSignaler, M: Memory, R: RomProvider> {
+pub struct Context<'a, D: Devices, S: ProcessSignaler, M: Memory> {
     pub(crate) devices: &'a mut D,
     pub(crate) signaler: &'a mut S,
     pub(crate) locals: &'a mut M,
-    pub(crate) rom: &'a R,
 }
 
 pub struct Cpu {
@@ -33,9 +32,9 @@ impl Cpu {
     }
 
     /// Executes an opcode and returns whether the process has yielded.
-    pub fn exec_opcode<'a, D: Devices, S: ProcessSignaler, M: Memory, R: RomProvider>(
+    pub fn exec_opcode<'a, D: Devices, S: ProcessSignaler, M: Memory>(
         &mut self,
-        ctx: &mut Context<'a, D, S, M, R>,
+        ctx: &mut Context<'a, D, S, M>,
         instruction: Instruction,
     ) -> Result<bool> {
         let Instruction { opcode, location } = instruction;
@@ -49,9 +48,14 @@ impl Cpu {
             }
             Opcode::Yield => Ok(true),
             Opcode::Spawn(process_type) => {
-                let process_id = ctx.signaler.spawn(process_type);
-                let args = ctx.rom.args(process_type)?;
-                for arg in args {
+                let (process_id, args) = ctx.signaler.spawn(process_type)?;
+                // initialize builtin locals
+                for (i, (_, value)) in BUILTIN_LOCALS.iter().enumerate() {
+                    ctx.locals.poke(process_id, i, *value)?;
+                }
+
+                // initialize locals from args
+                for arg in args.iter() {
                     let value = self.pop_stack()?;
                     ctx.locals.poke(process_id, *arg, value)?;
                 }
@@ -140,7 +144,8 @@ mod tests {
     use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
     use crate::devices::{ConsoleApi, DeviceType};
     use crate::error::RuntimeError;
-    use crate::vm::{MockDevices, MockMemory, MockProcessSignaler, RomProvider};
+    use crate::vm::{MockDevices, MockMemory, MockProcessSignaler};
+    use std::rc::Rc;
 
     use mockall::{mock, predicate::*};
 
@@ -155,21 +160,11 @@ mod tests {
             pub fn instructions(
                 &self,
                 process_type: ProcessType,
-            ) -> std::result::Result<&'static [Instruction], RuntimeError>;
+            ) -> std::result::Result<Rc<[Instruction]>, RuntimeError>;
             pub fn args(
                 &self,
                 process_type: ProcessType,
-            ) -> std::result::Result<&'static [usize], RuntimeError>;
-        }
-    }
-
-    impl RomProvider for MockRomProvider {
-        fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]> {
-            MockRomProvider::instructions(self, process_type)
-        }
-
-        fn args(&self, process_type: ProcessType) -> Result<&[usize]> {
-            MockRomProvider::args(self, process_type)
+            ) -> std::result::Result<Rc<[usize]>, RuntimeError>;
         }
     }
 
@@ -177,18 +172,14 @@ mod tests {
         devices: MockDevices,
         signaler: MockProcessSignaler,
         locals: MockMemory,
-        rom: MockRomProvider,
     }
 
     impl TestEnv {
-        fn context(
-            &mut self,
-        ) -> Context<'_, MockDevices, MockProcessSignaler, MockMemory, MockRomProvider> {
+        fn context(&mut self) -> Context<'_, MockDevices, MockProcessSignaler, MockMemory> {
             Context {
                 devices: &mut self.devices,
                 signaler: &mut self.signaler,
                 locals: &mut self.locals,
-                rom: &self.rom,
             }
         }
     }
@@ -198,15 +189,7 @@ mod tests {
             devices: any_devices(),
             signaler: any_signaler(),
             locals: any_memory(),
-            rom: any_rom(),
         }
-    }
-
-    fn any_rom() -> MockRomProvider {
-        let mut rom = MockRomProvider::new();
-        rom.expect_instructions().returning(|_| Ok(&[]));
-        rom.expect_args().returning(|_| Ok(&[]));
-        rom
     }
 
     fn any_memory() -> MockMemory {
@@ -229,7 +212,9 @@ mod tests {
 
     fn any_signaler() -> MockProcessSignaler {
         let mut signaler = MockProcessSignaler::new();
-        signaler.expect_spawn().returning(|_| ProcessId(2));
+        signaler
+            .expect_spawn()
+            .returning(|_| Ok((ProcessId(2), Rc::new([]))));
         signaler
     }
 
@@ -262,7 +247,10 @@ mod tests {
         let mut cpu = any_cpu();
         let mut env = any_env();
         let mut signaler = MockProcessSignaler::new();
-        signaler.expect_spawn().times(1).returning(|_| ProcessId(2));
+        signaler
+            .expect_spawn()
+            .times(1)
+            .returning(|_| Ok((ProcessId(2), Rc::new([]))));
         env.signaler = signaler;
 
         let any_process_type = ProcessType(5);
@@ -277,9 +265,6 @@ mod tests {
     fn test_spawn_opcode_with_args() {
         let mut cpu = any_cpu();
         let mut env = any_env();
-        let mut rom = MockRomProvider::new();
-        rom.expect_args().returning(|_| Ok(&[0]));
-        env.rom = rom;
         cpu.stack.push(Value::Numeric(Number::Int(42)));
         let any_process_type = ProcessType(5);
 
