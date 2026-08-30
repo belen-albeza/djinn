@@ -107,6 +107,10 @@ impl Cpu {
                 self.push_stack(value);
                 Ok(false)
             }
+            Opcode::Jump(addr) => {
+                self.pc = addr;
+                Ok(false)
+            }
             Opcode::Not => self.exec_opcode_not(),
             Opcode::And => self.exec_opcode_and(),
             Opcode::Or => self.exec_opcode_or(),
@@ -496,6 +500,17 @@ mod tests {
             cpu.exec_opcode(&mut env.context(), opcode(Opcode::LoadGlobal(3))),
             Err(RuntimeError::GlobalNotFound(Location::default(), 3))
         );
+    }
+
+    #[test]
+    fn test_jump_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Jump(42))),
+            Ok(false)
+        );
+        assert_eq!(cpu.pc, 42);
     }
 
     #[test]

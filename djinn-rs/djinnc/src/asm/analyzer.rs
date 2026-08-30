@@ -122,6 +122,37 @@ impl Analyzer {
         Ok(())
     }
 
+    pub fn resolve_labels(
+        &self,
+        process_alias: &str,
+        instructions: &mut Vec<StatementNode>,
+    ) -> Result<()> {
+        for instruction in instructions {
+            if let Opcode::Jump(_) = instruction.raw_opcode {
+                let label = instruction
+                    .raw_args
+                    .first()
+                    .ok_or(AssemblerError::MissingArgument(instruction.location))?;
+                let process =
+                    self.processes
+                        .get(process_alias)
+                        .ok_or(AssemblerError::UnknownAlias(
+                            instruction.location,
+                            process_alias.to_string(),
+                        ))?;
+                let address = process
+                    .labels
+                    .get(label)
+                    .ok_or(AssemblerError::UnknownLabel(
+                        instruction.location,
+                        label.clone(),
+                    ))?;
+                instruction.raw_opcode = Opcode::Jump(*address);
+            }
+        }
+        Ok(())
+    }
+
     fn process_type_for(&self, name: &str) -> ProcessType {
         if name == "main" {
             ProcessType(1)

@@ -32,6 +32,8 @@ pub enum TokenKind {
     // Global vars
     Stg,
     Ldg,
+    // Flow control
+    Jmp,
     // ALU
     Not,
     And,

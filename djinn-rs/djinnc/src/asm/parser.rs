@@ -248,6 +248,7 @@ impl Parser {
             TokenKind::Ldl => self.parse_load_local(lexer, analyzer, token.location),
             TokenKind::Stg => self.parse_store_global(lexer, analyzer, token.location),
             TokenKind::Ldg => self.parse_load_global(lexer, analyzer, token.location),
+            TokenKind::Jmp => self.parse_jump(lexer, token.location),
             TokenKind::Push => self.parse_push(lexer, token.location),
             TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             TokenKind::Not => Ok(Some(StatementNode::new(Opcode::Not, token.location))),
@@ -283,6 +284,17 @@ impl Parser {
         let alias = self.consume_process_alias(lexer)?;
         Ok(Some(
             StatementNode::new(Opcode::Spawn(ProcessType(0)), location).with_args(vec![alias]),
+        ))
+    }
+
+    fn parse_jump(
+        &mut self,
+        lexer: &mut Lexer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let label = self.consume_label(lexer)?;
+        Ok(Some(
+            StatementNode::new(Opcode::Jump(0), location).with_args(vec![label]),
         ))
     }
 
@@ -496,6 +508,28 @@ mod tests {
             AssemblerError::LabelAlreadyDefined(
                 Location { line: 1, column: 1 },
                 "label".to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_jump_statement() {
+        let mut lexer = Lexer::new("jmp @label");
+        let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
+        parser.current_process = "main".to_string();
+
+        let statement = parser
+            .parse_single_statement(&mut lexer, &mut analyzer)
+            .unwrap();
+        assert_eq!(
+            statement,
+            Some(
+                StatementNode::new(
+                    Opcode::Jump(0), // actual address is set in a second pass by the compiler
+                    Location { line: 1, column: 1 }
+                )
+                .with_args(vec!["label".to_string()])
             )
         );
     }

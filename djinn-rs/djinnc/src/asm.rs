@@ -43,6 +43,7 @@ pub fn compile(source_code: &str) -> Result<Rom> {
     analyzer.check_main_process_exists(lexer.current_location())?;
     for process in &mut processes {
         analyzer.resolve_process_refs(&mut process.instructions)?;
+        analyzer.resolve_labels(&process.name, &mut process.instructions)?;
     }
 
     let rom = processes
@@ -141,6 +142,38 @@ mod tests {
                     )
                 )
             ])))
+        );
+    }
+
+    #[test]
+    fn test_resolve_label_references() {
+        let res = compile("~main:\njmp @label\n@label:");
+
+        assert_eq!(
+            res,
+            Ok(Rom::new(HashMap::from([(
+                ProcessType(1),
+                ProcessDefinition::new(
+                    ProcessType(1),
+                    vec![Instruction::new(
+                        Opcode::Jump(1),
+                        Location { line: 2, column: 1 }
+                    )],
+                    vec![]
+                )
+            )])))
+        );
+    }
+
+    #[test]
+    fn test_resolve_label_references_returns_unknown_label_error() {
+        let res = compile("~main:\njmp @label");
+        assert_eq!(
+            res,
+            Err(AssemblerError::UnknownLabel(
+                Location { line: 2, column: 1 },
+                "label".to_string()
+            ))
         );
     }
 }

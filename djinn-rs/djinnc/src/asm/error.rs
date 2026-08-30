@@ -37,6 +37,8 @@ pub enum AssemblerError {
     InvalidDeviceType(Location, u8),
     #[error("Missing argument")]
     MissingArgument(Location),
+    #[error("Unknown label: {1}.")]
+    UnknownLabel(Location, String),
 }
 
 impl AssemblerError {
@@ -50,6 +52,7 @@ impl AssemblerError {
             AssemblerError::UnknownAlias(loc, _) => *loc,
             AssemblerError::InvalidDeviceType(loc, _) => *loc,
             AssemblerError::MissingArgument(loc) => *loc,
+            AssemblerError::UnknownLabel(loc, _) => *loc,
         }
     }
 
@@ -81,6 +84,7 @@ impl AssemblerError {
                 AssemblerError::InvalidDeviceType(location, device_type)
             }
             AssemblerError::MissingArgument(_) => AssemblerError::MissingArgument(location),
+            AssemblerError::UnknownLabel(_, label) => AssemblerError::UnknownLabel(location, label),
         }
     }
 }
