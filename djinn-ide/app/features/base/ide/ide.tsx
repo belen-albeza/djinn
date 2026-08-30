@@ -22,7 +22,7 @@ export default function Ide({ children }: IdeProps) {
           {children}
           <EmulatorView
             open={showEmulatorView}
-            onClose={() => useEmulatorStore.getState().setVisible(false)}
+            onClose={() => useEmulatorStore.getState().dispose()}
           />
         </main>
         <StatusBar />

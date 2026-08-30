@@ -22,16 +22,23 @@ export default function EmulatorView({
   const emulator = useEmulatorStore((state) => state.emulator);
 
   useEffect(() => {
-    if (!canvasRef.current || !emulator) return;
+    if (!canvasRef.current || !emulator || !open) return;
 
     const canvas = canvasRef.current;
     const imageData = new ImageData(CANVAS_WIDTH, CANVAS_HEIGHT);
-    let animationFrameId: number;
+    let animationFrameId = 0;
+    let stopped = false;
 
     let error: DjinnError | null = null;
 
+    const stop = () => {
+      stopped = true;
+      cancelAnimationFrame(animationFrameId);
+    };
+
     const frame = () => {
-      console.log(`frame id: ${animationFrameId}`);
+      if (stopped) return;
+
       let shallHalt = false;
 
       try {
@@ -57,39 +64,41 @@ export default function EmulatorView({
 
       if (!shallHalt) {
         animationFrameId = requestAnimationFrame(frame);
-      } else {
-        if (error) {
-          console.error(
-            `Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`,
-          );
-          useStatusBarStore.getState().setMessages([
-            {
-              level: "error",
-              position: error.position,
-              message: error.message,
-            },
-          ]);
-          useEditorStore.getState().setErrors([
-            {
-              position: error.position,
-              message: error.message,
-            },
-          ]);
-        } else {
-          useStatusBarStore.getState().setMessages([]);
-        }
-
-        // close the modal
-        onClose();
+        return;
       }
+
+      // handle errors
+      if (error) {
+        console.error(`Runtime error at Ln ${error.position.line}, Col ${error.position.column}: ${error.message}`);
+        useStatusBarStore.getState().setMessages([
+          {
+            level: "error",
+            position: error.position,
+            message: error.message,
+          },
+        ]);
+        useEditorStore.getState().setErrors([
+          {
+            position: error.position,
+            message: error.message,
+          },
+        ]);
+      } else {
+        useStatusBarStore.getState().setMessages([]);
+      }
+
+      // program halted succesfully -> close the modal
+      onClose();
     };
 
+    useEmulatorStore.getState().setStop(stop);
     animationFrameId = requestAnimationFrame(frame);
 
     return () => {
+      stop();
       cancelAnimationFrame(animationFrameId);
     };
-  }, [emulator, canvasRef]);
+  }, [emulator, canvasRef, open, onClose]);
 
   return (
     <Modal open={open} onClose={onClose} className="p-12 bg-sand-100">
