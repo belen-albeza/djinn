@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::asm::parser::StatementNode;
-use crate::asm::{AssemblerError, Location, Opcode, ProcessType, Result, BUILTIN_LOCALS};
-
+use crate::asm::{AssemblerError, BUILTIN_LOCALS, Location, Opcode, ProcessType, Result};
 
 #[derive(Debug, Clone, PartialEq)]
 struct ProcessMetadata {

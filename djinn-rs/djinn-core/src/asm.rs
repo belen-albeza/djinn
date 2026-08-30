@@ -1,13 +1,13 @@
 use std::fmt;
 use std::rc::Rc;
 
+mod builtins;
 mod opcode;
 mod value;
-mod builtins;
 
+pub use builtins::BUILTIN_LOCALS;
 pub use opcode::Opcode;
 pub use value::{Number, Value};
-pub use builtins::BUILTIN_LOCALS;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Location {

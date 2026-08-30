@@ -1,9 +1,9 @@
-use std::rc::Rc;
 use super::Process;
 use crate::asm::{ProcessId, ProcessType};
 use crate::error::Result;
 use crate::vm::ProcessSignaler;
 use crate::vm::RomProvider;
+use std::rc::Rc;
 
 /// Spawns / Kills processes
 pub struct Controller<R: RomProvider> {
@@ -29,8 +29,8 @@ impl<R: RomProvider> Controller<R> {
 
         let code = self.rom.instructions(process_type)?;
         let process = Process::new(id, process_type, code);
-        self.spawned.push(process);
 
+        self.spawned.push(process);
         Ok(id)
     }
 

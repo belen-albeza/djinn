@@ -4,7 +4,7 @@ mod cpu;
 pub mod memory;
 mod process;
 
-use crate::asm::{Instruction, Location, ProcessId, ProcessType, Value};
+use crate::asm::{BUILTIN_LOCALS, Instruction, Location, ProcessId, ProcessType, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use cpu::Context;
@@ -48,7 +48,7 @@ pub trait Memory {
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
 }
 
-pub struct Machine<D: Devices, R: RomProvider , M: Memory> {
+pub struct Machine<D: Devices, R: RomProvider, M: Memory> {
     devices: D,
     // rom: R,
     processes: Vec<Process>,
@@ -67,7 +67,15 @@ impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
         };
 
         // spawn main process
-        res.process_controller.spawn(ProcessType(1)).expect("failed to spawn main process");
+        res.process_controller
+            .spawn(ProcessType(1))
+            .expect("failed to spawn main process");
+        // initialize builtin locals for main process
+        for (i, (_, value)) in BUILTIN_LOCALS.iter().enumerate() {
+            res.locals
+                .poke(ProcessId(1), i, *value)
+                .expect("failed to initialize builtin locals for main");
+        }
         res.poll_process_controller();
         res
     }

@@ -1,4 +1,4 @@
-use crate::asm::{Instruction, Location, Opcode, ProcessId, Value};
+use crate::asm::{BUILTIN_LOCALS, Instruction, Location, Opcode, ProcessId, Value};
 use crate::error::RuntimeError;
 use crate::vm::{Devices, Memory, ValueStack};
 use crate::vm::{ProcessSignaler, Result};
@@ -49,6 +49,12 @@ impl Cpu {
             Opcode::Yield => Ok(true),
             Opcode::Spawn(process_type) => {
                 let (process_id, args) = ctx.signaler.spawn(process_type)?;
+                // initialize builtin locals
+                for (i, (_, value)) in BUILTIN_LOCALS.iter().enumerate() {
+                    ctx.locals.poke(process_id, i, *value)?;
+                }
+
+                // initialize locals from args
                 for arg in args.iter() {
                     let value = self.pop_stack()?;
                     ctx.locals.poke(process_id, *arg, value)?;
@@ -135,11 +141,11 @@ impl Default for Cpu {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::rc::Rc;
     use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
     use crate::devices::{ConsoleApi, DeviceType};
     use crate::error::RuntimeError;
     use crate::vm::{MockDevices, MockMemory, MockProcessSignaler};
+    use std::rc::Rc;
 
     use mockall::{mock, predicate::*};
 
@@ -169,9 +175,7 @@ mod tests {
     }
 
     impl TestEnv {
-        fn context(
-            &mut self,
-        ) -> Context<'_, MockDevices, MockProcessSignaler, MockMemory> {
+        fn context(&mut self) -> Context<'_, MockDevices, MockProcessSignaler, MockMemory> {
             Context {
                 devices: &mut self.devices,
                 signaler: &mut self.signaler,
@@ -208,7 +212,9 @@ mod tests {
 
     fn any_signaler() -> MockProcessSignaler {
         let mut signaler = MockProcessSignaler::new();
-        signaler.expect_spawn().returning(|_| Ok((ProcessId(2), Rc::new([]))));
+        signaler
+            .expect_spawn()
+            .returning(|_| Ok((ProcessId(2), Rc::new([]))));
         signaler
     }
 
@@ -241,7 +247,10 @@ mod tests {
         let mut cpu = any_cpu();
         let mut env = any_env();
         let mut signaler = MockProcessSignaler::new();
-        signaler.expect_spawn().times(1).returning(|_| Ok((ProcessId(2), Rc::new([]))));
+        signaler
+            .expect_spawn()
+            .times(1)
+            .returning(|_| Ok((ProcessId(2), Rc::new([]))));
         env.signaler = signaler;
 
         let any_process_type = ProcessType(5);

@@ -1,7 +1,7 @@
-use std::rc::Rc;
 use super::cpu::{Context, Cpu};
 use crate::asm::{Instruction, ProcessId, ProcessType};
 use crate::vm::{Devices, Memory, ProcessSignaler, Result};
+use std::rc::Rc;
 
 mod controller;
 pub use controller::Controller;
