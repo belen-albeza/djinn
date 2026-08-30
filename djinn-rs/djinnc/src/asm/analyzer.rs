@@ -27,12 +27,14 @@ impl ProcessMetadata {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Analyzer {
     processes: HashMap<String, ProcessMetadata>,
+    globals: HashMap<String, usize>,
 }
 
 impl Analyzer {
     pub fn new() -> Self {
         Self {
             processes: HashMap::new(),
+            globals: HashMap::new(),
         }
     }
 
@@ -60,6 +62,12 @@ impl Analyzer {
         let count = process.locals.len();
         let index = process.locals.entry(local).or_insert(count);
 
+        Ok(*index)
+    }
+
+    pub fn add_global(&mut self, global: String) -> Result<usize> {
+        let count = self.globals.len();
+        let index = self.globals.entry(global).or_insert(count);
         Ok(*index)
     }
 

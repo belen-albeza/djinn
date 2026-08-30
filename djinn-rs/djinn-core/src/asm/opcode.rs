@@ -18,8 +18,10 @@ pub enum Opcode {
     Pop,
     Dup,
     // Vars
-    Stl(usize),
-    Ldl(usize),
+    StoreLocal(usize),
+    LoadLocal(usize),
+    StoreGlobal(usize),
+    LoadGlobal(usize),
     // ALU
     Not,
     And,

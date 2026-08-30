@@ -153,6 +153,14 @@ impl Parser {
         Ok(index)
     }
 
+    fn consume_global(&mut self, lexer: &mut Lexer, analyzer: &mut Analyzer) -> Result<usize> {
+        self.consume(lexer, &[TokenKind::Dollar])?;
+        let id = self.consume(lexer, &[TokenKind::Id])?;
+        let index = analyzer.add_global(id.lexeme.to_owned())?;
+
+        Ok(index)
+    }
+
     fn parse_process_declaration(
         &mut self,
         lexer: &mut Lexer,
@@ -212,6 +220,8 @@ impl Parser {
             TokenKind::Dup => Ok(Some(StatementNode::new(Opcode::Dup, token.location))),
             TokenKind::Stl => self.parse_store_local(lexer, analyzer, token.location),
             TokenKind::Ldl => self.parse_load_local(lexer, analyzer, token.location),
+            TokenKind::Stg => self.parse_store_global(lexer, analyzer, token.location),
+            TokenKind::Ldg => self.parse_load_global(lexer, analyzer, token.location),
             TokenKind::Push => self.parse_push(lexer, token.location),
             TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             TokenKind::Not => Ok(Some(StatementNode::new(Opcode::Not, token.location))),
@@ -266,7 +276,10 @@ impl Parser {
         location: Location,
     ) -> Result<Option<StatementNode>> {
         let index = self.consume_local(lexer, analyzer)?;
-        Ok(Some(StatementNode::new(Opcode::Stl(index), location)))
+        Ok(Some(StatementNode::new(
+            Opcode::StoreLocal(index),
+            location,
+        )))
     }
 
     fn parse_load_local(
@@ -276,7 +289,33 @@ impl Parser {
         location: Location,
     ) -> Result<Option<StatementNode>> {
         let index = self.consume_local(lexer, analyzer)?;
-        Ok(Some(StatementNode::new(Opcode::Ldl(index), location)))
+        Ok(Some(StatementNode::new(Opcode::LoadLocal(index), location)))
+    }
+
+    fn parse_store_global(
+        &mut self,
+        lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let index = self.consume_global(lexer, analyzer)?;
+        Ok(Some(StatementNode::new(
+            Opcode::StoreGlobal(index),
+            location,
+        )))
+    }
+
+    fn parse_load_global(
+        &mut self,
+        lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let index = self.consume_global(lexer, analyzer)?;
+        Ok(Some(StatementNode::new(
+            Opcode::LoadGlobal(index),
+            location,
+        )))
     }
 
     fn parse_dev_call(
