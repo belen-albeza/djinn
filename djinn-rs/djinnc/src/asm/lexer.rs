@@ -61,6 +61,7 @@ impl<'a> Lexer<'a> {
                 '~' => TokenKind::Tilde,
                 '#' => TokenKind::Hash,
                 '$' => TokenKind::Dollar,
+                '@' => TokenKind::At,
                 // multi-char tokens
                 _ if x.is_ascii_digit() || x == '-' => self.scan_number_literal()?,
                 _ if x.is_alphabetic() => self.scan_identifier_or_opcode()?,
@@ -316,6 +317,12 @@ yld ;actual opcode
     fn test_scan_hash() {
         let mut lexer = Lexer::new("#");
         assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::Hash);
+    }
+
+    #[test]
+    fn test_scan_at() {
+        let mut lexer = Lexer::new("@");
+        assert_eq!(lexer.scan_token().unwrap().kind, TokenKind::At);
     }
 
     #[test]

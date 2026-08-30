@@ -29,6 +29,8 @@ pub enum AssemblerError {
     MainProcessNotFound(Location),
     #[error("Process already defined: {1}.")]
     ProcessAlreadyDefined(Location, String),
+    #[error("Label already defined: {1}.")]
+    LabelAlreadyDefined(Location, String),
     #[error("Unknown alias: {1}.")]
     UnknownAlias(Location, String),
     #[error("Invalid device type: {1}.")]
@@ -44,6 +46,7 @@ impl AssemblerError {
             AssemblerError::UnexpectedToken { location, .. } => *location,
             AssemblerError::MainProcessNotFound(loc) => *loc,
             AssemblerError::ProcessAlreadyDefined(loc, _) => *loc,
+            AssemblerError::LabelAlreadyDefined(loc, _) => *loc,
             AssemblerError::UnknownAlias(loc, _) => *loc,
             AssemblerError::InvalidDeviceType(loc, _) => *loc,
             AssemblerError::MissingArgument(loc) => *loc,
@@ -69,6 +72,9 @@ impl AssemblerError {
             AssemblerError::MainProcessNotFound(_) => AssemblerError::MainProcessNotFound(location),
             AssemblerError::ProcessAlreadyDefined(_, name) => {
                 AssemblerError::ProcessAlreadyDefined(location, name)
+            }
+            AssemblerError::LabelAlreadyDefined(_, label) => {
+                AssemblerError::LabelAlreadyDefined(location, label)
             }
             AssemblerError::UnknownAlias(_, alias) => AssemblerError::UnknownAlias(location, alias),
             AssemblerError::InvalidDeviceType(_, device_type) => {
