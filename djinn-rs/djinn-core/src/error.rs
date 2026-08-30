@@ -14,6 +14,8 @@ pub enum RuntimeError {
     ProcessNotFound(ProcessType),
     #[error("Unknown local address ${2} for process {1}")]
     LocalNotFound(Location, ProcessId, usize),
+    #[error("Unknown global address {0}")]
+    GlobalNotFound(Location, usize),
 }
 
 impl RuntimeError {
@@ -25,6 +27,7 @@ impl RuntimeError {
             RuntimeError::InvalidRom => Location::default(),
             RuntimeError::ProcessNotFound(_) => Location::default(),
             RuntimeError::LocalNotFound(location, _, _) => *location,
+            RuntimeError::GlobalNotFound(location, _) => *location,
         }
     }
 
@@ -36,6 +39,7 @@ impl RuntimeError {
             RuntimeError::LocalNotFound(_, id, addr) => {
                 RuntimeError::LocalNotFound(location, id, addr)
             }
+            RuntimeError::GlobalNotFound(_, addr) => RuntimeError::GlobalNotFound(location, addr),
             _ => self,
         }
     }

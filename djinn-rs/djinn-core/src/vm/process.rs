@@ -1,6 +1,6 @@
 use super::cpu::{Context, Cpu};
 use crate::asm::{Instruction, ProcessId, ProcessType};
-use crate::vm::{Devices, Memory, ProcessSignaler, Result};
+use crate::vm::{Devices, GlobalMemory, LocalMemory, ProcessSignaler, Result};
 use std::rc::Rc;
 
 mod controller;
@@ -42,9 +42,9 @@ impl Process {
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory>(
+    pub fn tick<'a, D: Devices, S: ProcessSignaler, L: LocalMemory, G: GlobalMemory>(
         &mut self,
-        ctx: &mut Context<'a, D, S, M>,
+        ctx: &mut Context<'a, D, S, L, G>,
     ) -> Result<()> {
         let code = self.code.clone(); // FIXME: is this OK?
         while let Some(instruction) = self.cpu.read_opcode(&code) {

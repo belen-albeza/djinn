@@ -162,6 +162,8 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         // vars
         "stl" => Some(TokenKind::Stl),
         "ldl" => Some(TokenKind::Ldl),
+        "stg" => Some(TokenKind::Stg),
+        "ldg" => Some(TokenKind::Ldg),
         // values
         "true" => Some(TokenKind::Bool(true)),
         "false" => Some(TokenKind::Bool(false)),

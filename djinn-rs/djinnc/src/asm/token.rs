@@ -28,6 +28,9 @@ pub enum TokenKind {
     // Local vars
     Stl,
     Ldl,
+    // Global vars
+    Stg,
+    Ldg,
     // ALU
     Not,
     And,

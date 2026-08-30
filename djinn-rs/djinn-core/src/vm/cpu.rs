@@ -1,6 +1,6 @@
 use crate::asm::{BUILTIN_LOCALS, Instruction, Location, Opcode, ProcessId, Value};
 use crate::error::RuntimeError;
-use crate::vm::{Devices, Memory, ValueStack};
+use crate::vm::{Devices, GlobalMemory, LocalMemory, ValueStack};
 use crate::vm::{ProcessSignaler, Result};
 
 pub(crate) mod stack;
@@ -8,10 +8,11 @@ use stack::Stack;
 mod opcodes_alu;
 
 #[derive(Debug)]
-pub struct Context<'a, D: Devices, S: ProcessSignaler, M: Memory> {
+pub struct Context<'a, D: Devices, S: ProcessSignaler, L: LocalMemory, G: GlobalMemory> {
     pub(crate) devices: &'a mut D,
     pub(crate) signaler: &'a mut S,
-    pub(crate) locals: &'a mut M,
+    pub(crate) locals: &'a mut L,
+    pub(crate) globals: &'a mut G,
 }
 
 pub struct Cpu {
@@ -32,9 +33,9 @@ impl Cpu {
     }
 
     /// Executes an opcode and returns whether the process has yielded.
-    pub fn exec_opcode<'a, D: Devices, S: ProcessSignaler, M: Memory>(
+    pub fn exec_opcode<'a, D: Devices, S: ProcessSignaler, L: LocalMemory, G: GlobalMemory>(
         &mut self,
-        ctx: &mut Context<'a, D, S, M>,
+        ctx: &mut Context<'a, D, S, L, G>,
         instruction: Instruction,
     ) -> Result<bool> {
         let Instruction { opcode, location } = instruction;
@@ -81,18 +82,28 @@ impl Cpu {
                 self.push_stack(value);
                 Ok(false)
             }
-            Opcode::Stl(addr) => {
+            Opcode::StoreLocal(addr) => {
                 let value = self.pop_stack()?;
                 ctx.locals
                     .poke(self.id, addr, value)
                     .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
                 Ok(false)
             }
-            Opcode::Ldl(addr) => {
+            Opcode::LoadLocal(addr) => {
                 let value = ctx
                     .locals
                     .peek(self.id, addr)
                     .map_err(|e: RuntimeError| e.with_location(self.current_location))?;
+                self.push_stack(value);
+                Ok(false)
+            }
+            Opcode::StoreGlobal(addr) => {
+                let value = self.pop_stack()?;
+                ctx.globals.poke(addr, value)?;
+                Ok(false)
+            }
+            Opcode::LoadGlobal(addr) => {
+                let value = ctx.globals.peek(addr)?;
                 self.push_stack(value);
                 Ok(false)
             }
@@ -144,7 +155,7 @@ mod tests {
     use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
     use crate::devices::{ConsoleApi, DeviceType};
     use crate::error::RuntimeError;
-    use crate::vm::{MockDevices, MockMemory, MockProcessSignaler};
+    use crate::vm::{MockDevices, MockGlobalMemory, MockLocalMemory, MockProcessSignaler};
     use std::rc::Rc;
 
     use mockall::{mock, predicate::*};
@@ -171,15 +182,20 @@ mod tests {
     struct TestEnv {
         devices: MockDevices,
         signaler: MockProcessSignaler,
-        locals: MockMemory,
+        locals: MockLocalMemory,
+        globals: MockGlobalMemory,
     }
 
     impl TestEnv {
-        fn context(&mut self) -> Context<'_, MockDevices, MockProcessSignaler, MockMemory> {
+        fn context(
+            &mut self,
+        ) -> Context<'_, MockDevices, MockProcessSignaler, MockLocalMemory, MockGlobalMemory>
+        {
             Context {
                 devices: &mut self.devices,
                 signaler: &mut self.signaler,
                 locals: &mut self.locals,
+                globals: &mut self.globals,
             }
         }
     }
@@ -188,16 +204,26 @@ mod tests {
         TestEnv {
             devices: any_devices(),
             signaler: any_signaler(),
-            locals: any_memory(),
+            locals: any_local_memory(),
+            globals: any_global_memory(),
         }
     }
 
-    fn any_memory() -> MockMemory {
-        let mut memory = MockMemory::new();
+    fn any_local_memory() -> MockLocalMemory {
+        let mut memory = MockLocalMemory::new();
         memory.expect_poke().returning(|__, _, _| Ok(()));
         memory
             .expect_peek()
             .returning(|__, _| Ok(Value::Numeric(Number::Int(0))));
+        memory
+    }
+
+    fn any_global_memory() -> MockGlobalMemory {
+        let mut memory = MockGlobalMemory::new();
+        memory.expect_poke().returning(|_, _| Ok(()));
+        memory
+            .expect_peek()
+            .returning(|_| Ok(Value::Numeric(Number::Int(0))));
         memory
     }
 
@@ -350,7 +376,7 @@ mod tests {
     fn test_ldl_opcode() {
         let mut cpu = any_cpu();
         let mut env = any_env();
-        let mut memory = MockMemory::new();
+        let mut memory = MockLocalMemory::new();
         memory
             .expect_peek()
             .with(eq(cpu.id), eq(3))
@@ -359,7 +385,7 @@ mod tests {
         env.locals = memory;
 
         assert_eq!(
-            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Ldl(3))),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::LoadLocal(3))),
             Ok(false)
         );
         assert_eq!(
@@ -372,7 +398,7 @@ mod tests {
     fn test_ldl_with_invalid_address() {
         let mut cpu = any_cpu();
         let mut env = any_env();
-        let mut memory = MockMemory::new();
+        let mut memory = MockLocalMemory::new();
         memory.expect_peek().returning(|_, _| {
             Err(RuntimeError::LocalNotFound(
                 Location::default(),
@@ -385,7 +411,7 @@ mod tests {
         assert_eq!(
             cpu.exec_opcode(
                 &mut env.context(),
-                Instruction::new(Opcode::Ldl(3), Location { line: 2, column: 3 })
+                Instruction::new(Opcode::LoadLocal(3), Location { line: 2, column: 3 })
             ),
             Err(RuntimeError::LocalNotFound(
                 Location { line: 2, column: 3 },
@@ -399,7 +425,7 @@ mod tests {
     fn test_stl_opcode() {
         let mut cpu = any_cpu();
         let mut env = any_env();
-        let mut memory = MockMemory::new();
+        let mut memory = MockLocalMemory::new();
         memory
             .expect_poke()
             .with(eq(cpu.id), eq(3), eq(Value::Numeric(Number::Int(42))))
@@ -410,10 +436,66 @@ mod tests {
         cpu.push_stack(Value::Numeric(Number::Int(42)));
 
         assert_eq!(
-            cpu.exec_opcode(&mut env.context(), opcode(Opcode::Stl(3))),
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::StoreLocal(3))),
             Ok(false)
         );
         assert!(cpu.stack.is_empty());
+    }
+
+    #[test]
+    fn test_stg_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockGlobalMemory::new();
+        memory
+            .expect_poke()
+            .with(eq(3), eq(Value::Numeric(Number::Int(42))))
+            .times(1)
+            .returning(|_, _| Ok(()));
+        env.globals = memory;
+        cpu.push_stack(Value::Numeric(Number::Int(42)));
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::StoreGlobal(3))),
+            Ok(false)
+        );
+        assert!(cpu.stack.is_empty());
+    }
+
+    #[test]
+    fn test_ldg_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockGlobalMemory::new();
+        memory
+            .expect_peek()
+            .with(eq(3))
+            .returning(|_| Ok(Value::Numeric(Number::Int(42))));
+        env.globals = memory;
+
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::LoadGlobal(3))),
+            Ok(false)
+        );
+        assert_eq!(
+            cpu.stack.pop(Location::default()),
+            Ok(Value::Numeric(Number::Int(42)))
+        );
+    }
+
+    #[test]
+    fn test_ldg_with_invalid_address() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        let mut memory = MockGlobalMemory::new();
+        memory
+            .expect_peek()
+            .returning(|_| Err(RuntimeError::GlobalNotFound(Location::default(), 3)));
+        env.globals = memory;
+
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::LoadGlobal(3))),
+            Err(RuntimeError::GlobalNotFound(Location::default(), 3))
+        );
     }
 
     #[test]

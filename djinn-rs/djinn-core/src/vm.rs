@@ -43,28 +43,34 @@ pub trait ProcessSignaler {
 }
 
 #[cfg_attr(test, mockall::automock)]
-pub trait Memory {
+pub trait LocalMemory {
     fn poke(&mut self, id: ProcessId, address: usize, value: Value) -> Result<()>;
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
     fn free(&mut self, id: ProcessId);
 }
 
-pub struct Machine<D: Devices, R: RomProvider, M: Memory> {
-    devices: D,
-    // rom: R,
-    processes: Vec<Process>,
-    process_controller: Controller<R>,
-    locals: M,
+#[cfg_attr(test, mockall::automock)]
+pub trait GlobalMemory {
+    fn poke(&mut self, address: usize, value: Value) -> Result<()>;
+    fn peek(&self, address: usize) -> Result<Value>;
 }
 
-impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
-    pub fn new(devices: D, rom: R, locals: M) -> Self {
+pub struct Machine<D: Devices, R: RomProvider, L: LocalMemory, G: GlobalMemory> {
+    devices: D,
+    processes: Vec<Process>,
+    process_controller: Controller<R>,
+    locals: L,
+    globals: G,
+}
+
+impl<D: Devices, R: RomProvider, L: LocalMemory, G: GlobalMemory> Machine<D, R, L, G> {
+    pub fn new(devices: D, rom: R, locals: L, globals: G) -> Self {
         let mut res = Self {
             devices,
-            // rom,
             processes: vec![],
             process_controller: Controller::new(rom),
             locals,
+            globals,
         };
 
         // spawn main process
@@ -86,6 +92,7 @@ impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
             devices: &mut self.devices,
             signaler: &mut self.process_controller,
             locals: &mut self.locals,
+            globals: &mut self.globals,
         };
 
         ctx.devices.clear_stdout();
@@ -161,8 +168,8 @@ mod tests {
         Rom::new(with_main.into_iter().collect())
     }
 
-    fn any_memory() -> impl Memory {
-        let mut memory = MockMemory::new();
+    fn any_local_memory() -> impl LocalMemory {
+        let mut memory = MockLocalMemory::new();
         memory.expect_poke().returning(|__, _, _| Ok(()));
         memory
             .expect_peek()
@@ -171,9 +178,9 @@ mod tests {
         memory
     }
 
-    fn tracking_memory() -> (MockMemory, Arc<Mutex<Vec<ProcessId>>>) {
+    fn tracking_local_memory() -> (MockLocalMemory, Arc<Mutex<Vec<ProcessId>>>) {
         let freed = Arc::new(Mutex::new(Vec::new()));
-        let mut memory = MockMemory::new();
+        let mut memory = MockLocalMemory::new();
         memory.expect_poke().returning(|_, _, _| Ok(()));
         memory
             .expect_peek()
@@ -185,17 +192,27 @@ mod tests {
         (memory, freed)
     }
 
+    fn any_global_memory() -> impl GlobalMemory {
+        let mut memory = MockGlobalMemory::new();
+        memory.expect_poke().returning(|_, _| Ok(()));
+        memory
+            .expect_peek()
+            .returning(|_| Ok(Value::Numeric(Number::Int(0))));
+        memory
+    }
+
     fn any_machine_with_rom(
         r: impl RomProvider,
-    ) -> Machine<impl Devices, impl RomProvider, impl Memory> {
-        Machine::new(any_devices(), r, any_memory())
+    ) -> Machine<impl Devices, impl RomProvider, impl LocalMemory, impl GlobalMemory> {
+        Machine::new(any_devices(), r, any_local_memory(), any_global_memory())
     }
 
     fn any_machine_with_rom_and_memory(
         r: impl RomProvider,
-        memory: impl Memory,
-    ) -> Machine<impl Devices, impl RomProvider, impl Memory> {
-        Machine::new(any_devices(), r, memory)
+        locals: impl LocalMemory,
+        globals: impl GlobalMemory,
+    ) -> Machine<impl Devices, impl RomProvider, impl LocalMemory, impl GlobalMemory> {
+        Machine::new(any_devices(), r, locals, globals)
     }
 
     #[test]
@@ -289,7 +306,7 @@ mod tests {
         devices.expect_stdout().return_const(vec![]);
         devices.expect_clear_stdout().returning(|| ());
 
-        let mut machine = Machine::new(devices, rom, any_memory());
+        let mut machine = Machine::new(devices, rom, any_local_memory(), any_global_memory());
 
         // Frame 1: only process #1 exists; it spawns #2 but it starts next frame.
         machine.tick().unwrap();
@@ -333,7 +350,7 @@ mod tests {
         ]));
 
         // Frame 1: process #1 spawns #2, then yields
-        let mut machine = Machine::new(any_devices(), rom, any_memory());
+        let mut machine = Machine::new(any_devices(), rom, any_local_memory(), any_global_memory());
         machine.tick().unwrap();
         assert_eq!(machine.processes.len(), 2);
 
@@ -344,8 +361,9 @@ mod tests {
 
     #[test]
     fn test_terminated_processes_free_memory_slots() {
-        let (memory, freed) = tracking_memory();
-        let mut machine = any_machine_with_rom_and_memory(any_rom(vec![]), memory);
+        let (memory, freed) = tracking_local_memory();
+        let mut machine =
+            any_machine_with_rom_and_memory(any_rom(vec![]), memory, any_global_memory());
         machine.tick().unwrap(); // empty main process terminates immediately
         assert!(freed.lock().unwrap().contains(&ProcessId(1)));
     }
