@@ -1,13 +1,15 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 use crate::asm::parser::StatementNode;
 use crate::asm::{AssemblerError, BUILTIN_LOCALS, Location, Opcode, ProcessType, Result};
 
 #[derive(Debug, Clone, PartialEq)]
-struct ProcessMetadata {
+pub(crate) struct ProcessMetadata {
     pub location: Location,
     pub process_type: ProcessType,
     pub locals: HashMap<String, usize>,
+    pub labels: HashMap<String, usize>,
 }
 
 impl ProcessMetadata {
@@ -20,14 +22,15 @@ impl ProcessMetadata {
                 .enumerate()
                 .map(|(i, (name, _))| (name.to_string(), i))
                 .collect(),
+            labels: HashMap::new(),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Analyzer {
-    processes: HashMap<String, ProcessMetadata>,
-    globals: HashMap<String, usize>,
+    pub(crate) processes: HashMap<String, ProcessMetadata>,
+    pub(crate) globals: HashMap<String, usize>,
 }
 
 impl Analyzer {
@@ -69,6 +72,23 @@ impl Analyzer {
         let count = self.globals.len();
         let index = self.globals.entry(global).or_insert(count);
         Ok(*index)
+    }
+
+    pub fn add_label(&mut self, process_alias: &str, label: String, pc: usize) -> Result<()> {
+        let process = self
+            .processes
+            .get_mut(process_alias)
+            .expect("Process does not exist");
+        match process.labels.entry(label) {
+            Entry::Occupied(entry) => Err(AssemblerError::LabelAlreadyDefined(
+                Location::default(),
+                entry.key().clone(),
+            )),
+            Entry::Vacant(entry) => {
+                entry.insert(pc);
+                Ok(())
+            }
+        }
     }
 
     pub fn check_main_process_exists(&self, location: Location) -> Result<()> {

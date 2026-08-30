@@ -43,12 +43,14 @@ pub struct ProcessNode {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Parser {
     current_process: String,
+    pc: usize,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Self {
             current_process: "".to_string(),
+            pc: 0,
         }
     }
 
@@ -161,6 +163,28 @@ impl Parser {
         Ok(index)
     }
 
+    fn consume_label(&mut self, lexer: &mut Lexer) -> Result<String> {
+        self.consume(lexer, &[TokenKind::At])?;
+        let id = self.consume(lexer, &[TokenKind::Id])?;
+        Ok(id.lexeme)
+    }
+
+    fn maybe_consume_label_declaration(
+        &mut self,
+        lexer: &mut Lexer,
+        analyzer: &mut Analyzer,
+    ) -> Result<()> {
+        let peeked = lexer.peek_token()?;
+        if peeked.kind == TokenKind::At {
+            let label = self.consume_label(lexer)?;
+            self.consume(lexer, &[TokenKind::Colon])?;
+            analyzer
+                .add_label(&self.current_process, label, self.pc)
+                .map_err(|e| e.with_location(peeked.location))?;
+        }
+        Ok(())
+    }
+
     fn parse_process_declaration(
         &mut self,
         lexer: &mut Lexer,
@@ -192,7 +216,7 @@ impl Parser {
         let mut res = Vec::new();
         while let Some(statement) = self.parse_single_statement(lexer, analyzer)? {
             res.push(statement);
-            // TODO: increment pc for labels
+            self.pc += 1;
         }
 
         Ok(res)
@@ -203,6 +227,8 @@ impl Parser {
         lexer: &mut Lexer,
         analyzer: &mut Analyzer,
     ) -> Result<Option<StatementNode>> {
+        self.maybe_consume_label_declaration(lexer, analyzer)?; // labels do not increment pc and are not an statement
+
         // stop at process declaration or EOF
         let peeked = lexer.peek_token()?;
         if peeked.kind == TokenKind::Tilde || peeked.kind == TokenKind::Eof {
@@ -336,6 +362,7 @@ impl Parser {
 mod tests {
     use super::*;
     use djinn_core::asm::BUILTIN_LOCALS;
+    use std::collections::HashMap;
 
     #[test]
     fn test_parse_process_declaration() {
@@ -429,5 +456,47 @@ mod tests {
 
         let alias = parser.consume_alias(&mut lexer).unwrap();
         assert_eq!(alias, 0x00);
+    }
+
+    #[test]
+    fn test_parse_label_declaration() {
+        let mut lexer = Lexer::new("@label:");
+        let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
+        analyzer
+            .add_process("main", Location { line: 1, column: 1 })
+            .unwrap();
+        parser.current_process = "main".to_string();
+        parser.pc = 1;
+
+        parser
+            .maybe_consume_label_declaration(&mut lexer, &mut analyzer)
+            .unwrap();
+        let labels = &analyzer.processes["main"].labels;
+
+        assert_eq!(labels, &HashMap::from([("label".to_string(), 1)]));
+    }
+
+    #[test]
+    fn test_parse_label_declaration_with_duplicate() {
+        let mut lexer = Lexer::new("@label:");
+        let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
+        analyzer
+            .add_process("main", Location { line: 1, column: 1 })
+            .unwrap();
+        analyzer.add_label("main", "label".to_string(), 1).unwrap();
+        parser.current_process = "main".to_string();
+
+        let err = parser
+            .maybe_consume_label_declaration(&mut lexer, &mut analyzer)
+            .unwrap_err();
+        assert_eq!(
+            err,
+            AssemblerError::LabelAlreadyDefined(
+                Location { line: 1, column: 1 },
+                "label".to_string()
+            )
+        );
     }
 }
