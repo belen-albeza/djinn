@@ -65,9 +65,7 @@ impl Parser {
         let (location, name, process_type, args) =
             self.parse_process_declaration(lexer, analyzer)?;
 
-        let mut instructions = self.parse_statements(lexer, analyzer)?;
-
-        analyzer.fill_args(&mut instructions)?;
+        let instructions = self.parse_statements(lexer, analyzer)?;
 
         Ok(Some(ProcessNode {
             instructions,
