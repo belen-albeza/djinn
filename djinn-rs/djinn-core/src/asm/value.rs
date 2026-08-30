@@ -133,6 +133,21 @@ impl Value {
         }
     }
 
+    pub fn as_int(&self) -> i32 {
+        match self {
+            Value::Numeric(Number::Int(x)) => *x,
+            Value::Numeric(Number::Float(x)) => x.floor() as i32,
+            Value::Bool(x) => {
+                if *x {
+                    1
+                } else {
+                    0
+                }
+            }
+            Value::Process(x) => x.0 as i32,
+        }
+    }
+
     pub fn and(&self, other: &Self) -> Self {
         Self::Bool(self.as_bool() && other.as_bool())
     }

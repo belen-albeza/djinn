@@ -1,4 +1,5 @@
 use crate::asm::{Location, ProcessId, ProcessType};
+use crate::devices::DeviceType;
 
 #[derive(Debug, thiserror::Error, PartialEq)]
 pub enum RuntimeError {
@@ -16,6 +17,10 @@ pub enum RuntimeError {
     LocalNotFound(Location, ProcessId, usize),
     #[error("Unknown global address {0}")]
     GlobalNotFound(Location, usize),
+    #[error("Invalid API code {1} for device {2:?}")]
+    InvalidApiCode(Location, u8, DeviceType),
+    #[error("Invalid device type {1}")]
+    InvalidDeviceType(Location, u8),
 }
 
 impl RuntimeError {
@@ -28,6 +33,8 @@ impl RuntimeError {
             RuntimeError::ProcessNotFound(_) => Location::default(),
             RuntimeError::LocalNotFound(location, _, _) => *location,
             RuntimeError::GlobalNotFound(location, _) => *location,
+            RuntimeError::InvalidApiCode(location, _, _) => *location,
+            RuntimeError::InvalidDeviceType(location, _) => *location,
         }
     }
 
@@ -40,6 +47,12 @@ impl RuntimeError {
                 RuntimeError::LocalNotFound(location, id, addr)
             }
             RuntimeError::GlobalNotFound(_, addr) => RuntimeError::GlobalNotFound(location, addr),
+            RuntimeError::InvalidApiCode(_, api_code, device_type) => {
+                RuntimeError::InvalidApiCode(location, api_code, device_type)
+            }
+            RuntimeError::InvalidDeviceType(_, device_type) => {
+                RuntimeError::InvalidDeviceType(location, device_type)
+            }
             _ => self,
         }
     }

@@ -1,6 +1,11 @@
 use crate::asm::Location;
-use crate::error::Result;
+use crate::error::{Result, RuntimeError};
 use crate::vm::{Devices, ValueStack};
+
+pub mod console;
+pub mod video;
+
+pub use video::{VIDEO_HEIGHT, VIDEO_WIDTH};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -10,106 +15,29 @@ pub enum DeviceType {
     Video = 0x01,
 }
 
-impl From<u8> for DeviceType {
-    // NOTE: we can panic here because we are controlling the symbol values
-    //       in the compiler itself.
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for DeviceType {
+    type Error = RuntimeError;
+
+    fn try_from(value: u8) -> Result<Self> {
         match value {
-            0x00 => Self::Console,
-            0x01 => Self::Video,
-            _ => unreachable!("Invalid device type: {}", value),
+            0x00 => Ok(Self::Console),
+            0x01 => Ok(Self::Video),
+            _ => Err(RuntimeError::InvalidDeviceType(Location::default(), value)),
         }
-    }
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ConsoleApi {
-    Log = 0x00,
-}
-
-impl From<u8> for ConsoleApi {
-    // NOTE: we can panic here because we are controlling the symbol values
-    //       in the compiler itself.
-    fn from(value: u8) -> Self {
-        match value {
-            0x00 => Self::Log,
-            _ => unreachable!("Invalid console API: {}", value),
-        }
-    }
-}
-
-pub const VIDEO_WIDTH: usize = 160;
-pub const VIDEO_HEIGHT: usize = 144;
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct VideoDevice {
-    video_buffer: [u8; VIDEO_WIDTH * VIDEO_HEIGHT],
-}
-
-impl VideoDevice {
-    fn new() -> Self {
-        Self {
-            video_buffer: [0; VIDEO_WIDTH * VIDEO_HEIGHT],
-        }
-    }
-
-    fn buffer(&self) -> &[u8] {
-        &self.video_buffer
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ConsoleDevice {
-    messages: Vec<String>,
-}
-
-impl ConsoleDevice {
-    fn new() -> Self {
-        Self {
-            messages: Vec::new(),
-        }
-    }
-
-    fn call_api(
-        &mut self,
-        raw_op: u8,
-        stack: &mut impl ValueStack,
-        location: Location,
-    ) -> Result<bool> {
-        match ConsoleApi::from(raw_op) {
-            ConsoleApi::Log => {
-                let value = stack.pop(location)?;
-                self.log(format!("{}", value));
-                Ok(false)
-            }
-        }
-    }
-
-    fn messages(&self) -> &[String] {
-        &self.messages
-    }
-
-    fn clear_messages(&mut self) {
-        self.messages.clear();
-    }
-
-    fn log(&mut self, message: String) {
-        self.messages.push(message);
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DeviceSet {
-    video: VideoDevice,
-    console: ConsoleDevice,
+    video: video::VideoDevice,
+    console: console::ConsoleDevice,
 }
 
 impl DeviceSet {
     pub fn new() -> Self {
         Self {
-            video: VideoDevice::new(),
-            console: ConsoleDevice::new(),
+            video: video::VideoDevice::default(),
+            console: console::ConsoleDevice::default(),
         }
     }
 }
@@ -130,7 +58,7 @@ impl Devices for DeviceSet {
     ) -> Result<bool> {
         match device_type {
             DeviceType::Console => self.console.call_api(api_op, stack, location),
-            DeviceType::Video => unimplemented!(),
+            DeviceType::Video => self.video.call_api(api_op, stack, location),
         }
     }
 

@@ -31,6 +31,8 @@ pub enum AssemblerError {
     ProcessAlreadyDefined(Location, String),
     #[error("Unknown alias: {1}.")]
     UnknownAlias(Location, String),
+    #[error("Invalid device type: {1}.")]
+    InvalidDeviceType(Location, u8),
     #[error("Missing argument")]
     MissingArgument(Location),
 }
@@ -43,6 +45,7 @@ impl AssemblerError {
             AssemblerError::MainProcessNotFound(loc) => *loc,
             AssemblerError::ProcessAlreadyDefined(loc, _) => *loc,
             AssemblerError::UnknownAlias(loc, _) => *loc,
+            AssemblerError::InvalidDeviceType(loc, _) => *loc,
             AssemblerError::MissingArgument(loc) => *loc,
         }
     }
@@ -68,6 +71,9 @@ impl AssemblerError {
                 AssemblerError::ProcessAlreadyDefined(location, name)
             }
             AssemblerError::UnknownAlias(_, alias) => AssemblerError::UnknownAlias(location, alias),
+            AssemblerError::InvalidDeviceType(_, device_type) => {
+                AssemblerError::InvalidDeviceType(location, device_type)
+            }
             AssemblerError::MissingArgument(_) => AssemblerError::MissingArgument(location),
         }
     }
