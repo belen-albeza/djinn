@@ -325,8 +325,9 @@ impl Parser {
     ) -> Result<Option<StatementNode>> {
         let device_type = self.consume_alias(lexer)?;
         let api_op = self.consume_alias(lexer)?;
-
-        let opcode = Opcode::Device(DeviceType::from(device_type), api_op);
+        let device_type = DeviceType::try_from(device_type)
+            .map_err(|_| AssemblerError::InvalidDeviceType(location, device_type))?;
+        let opcode = Opcode::Device(device_type, api_op);
         Ok(Some(StatementNode::new(opcode, location)))
     }
 }

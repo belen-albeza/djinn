@@ -1,5 +1,5 @@
 use crate::asm::Location;
-use crate::error::Result;
+use crate::error::{Result, RuntimeError};
 use crate::vm::{Devices, ValueStack};
 
 #[repr(u8)]
@@ -10,14 +10,14 @@ pub enum DeviceType {
     Video = 0x01,
 }
 
-impl From<u8> for DeviceType {
-    // NOTE: we can panic here because we are controlling the symbol values
-    //       in the compiler itself.
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for DeviceType {
+    type Error = RuntimeError;
+
+    fn try_from(value: u8) -> Result<Self> {
         match value {
-            0x00 => Self::Console,
-            0x01 => Self::Video,
-            _ => unreachable!("Invalid device type: {}", value),
+            0x00 => Ok(Self::Console),
+            0x01 => Ok(Self::Video),
+            _ => Err(RuntimeError::InvalidDeviceType(Location::default(), value)),
         }
     }
 }
@@ -28,13 +28,38 @@ pub enum ConsoleApi {
     Log = 0x00,
 }
 
-impl From<u8> for ConsoleApi {
-    // NOTE: we can panic here because we are controlling the symbol values
-    //       in the compiler itself.
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for ConsoleApi {
+    type Error = RuntimeError;
+
+    fn try_from(value: u8) -> Result<Self> {
         match value {
-            0x00 => Self::Log,
-            _ => unreachable!("Invalid console API: {}", value),
+            0x00 => Ok(Self::Log),
+            _ => Err(RuntimeError::InvalidApiCode(
+                Location::default(),
+                value,
+                DeviceType::Console,
+            )),
+        }
+    }
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum VideoApi {
+    Clear = 0x00,
+}
+
+impl TryFrom<u8> for VideoApi {
+    type Error = RuntimeError;
+
+    fn try_from(value: u8) -> Result<Self> {
+        match value {
+            0x00 => Ok(Self::Clear),
+            _ => Err(RuntimeError::InvalidApiCode(
+                Location::default(),
+                value,
+                DeviceType::Video,
+            )),
         }
     }
 }
@@ -57,6 +82,25 @@ impl VideoDevice {
     fn buffer(&self) -> &[u8] {
         &self.video_buffer
     }
+
+    fn clear_buffer(&mut self, color: u8) {
+        self.video_buffer.fill(color.rem_euclid(16));
+    }
+
+    fn call_api(
+        &mut self,
+        raw_op: u8,
+        stack: &mut impl ValueStack,
+        location: Location,
+    ) -> Result<bool> {
+        match VideoApi::try_from(raw_op)? {
+            VideoApi::Clear => {
+                let color = stack.pop(location)?.as_int().rem_euclid(16);
+                self.clear_buffer(color as u8);
+                Ok(false)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -77,7 +121,7 @@ impl ConsoleDevice {
         stack: &mut impl ValueStack,
         location: Location,
     ) -> Result<bool> {
-        match ConsoleApi::from(raw_op) {
+        match ConsoleApi::try_from(raw_op)? {
             ConsoleApi::Log => {
                 let value = stack.pop(location)?;
                 self.log(format!("{}", value));
@@ -130,7 +174,7 @@ impl Devices for DeviceSet {
     ) -> Result<bool> {
         match device_type {
             DeviceType::Console => self.console.call_api(api_op, stack, location),
-            DeviceType::Video => unimplemented!(),
+            DeviceType::Video => self.video.call_api(api_op, stack, location),
         }
     }
 

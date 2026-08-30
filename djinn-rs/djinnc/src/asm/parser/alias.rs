@@ -7,8 +7,11 @@ static ALIASES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
     HashMap::from([
         // device types
         ("console", 0x00),
+        ("video", 0x01),
         // console api
         ("log", 0x00),
+        // video api
+        ("clear", 0x00),
     ])
 });
 
