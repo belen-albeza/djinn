@@ -153,7 +153,7 @@ impl Default for Cpu {
 mod tests {
     use super::*;
     use crate::asm::{Location, Number, ProcessId, ProcessType, Value};
-    use crate::devices::{ConsoleApi, DeviceType};
+    use crate::devices::{DeviceType, console::ConsoleApi};
     use crate::error::RuntimeError;
     use crate::vm::{MockDevices, MockGlobalMemory, MockLocalMemory, MockProcessSignaler};
     use std::rc::Rc;
