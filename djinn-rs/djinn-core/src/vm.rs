@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 mod cpu;
 pub mod memory;
 mod process;
@@ -30,13 +32,13 @@ pub trait ValueStack {
 }
 
 pub trait RomProvider {
-    fn instructions(&self, process_type: ProcessType) -> Result<&[Instruction]>;
-    fn args(&self, process_type: ProcessType) -> Result<&[usize]>;
+    fn instructions(&self, process_type: ProcessType) -> Result<Rc<[Instruction]>>;
+    fn args(&self, process_type: ProcessType) -> Result<Rc<[usize]>>;
 }
 
 #[cfg_attr(test, mockall::automock)]
 pub trait ProcessSignaler {
-    fn spawn(&mut self, process_type: ProcessType) -> ProcessId;
+    fn spawn(&mut self, process_type: ProcessType) -> Result<(ProcessId, Rc<[usize]>)>;
     fn kill(&mut self, process_id: ProcessId);
 }
 
@@ -46,11 +48,11 @@ pub trait Memory {
     fn peek(&self, id: ProcessId, address: usize) -> Result<Value>;
 }
 
-pub struct Machine<D: Devices, R: RomProvider, M: Memory> {
+pub struct Machine<D: Devices, R: RomProvider , M: Memory> {
     devices: D,
-    rom: R,
+    // rom: R,
     processes: Vec<Process>,
-    process_controller: Controller,
+    process_controller: Controller<R>,
     locals: M,
 }
 
@@ -58,14 +60,14 @@ impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
     pub fn new(devices: D, rom: R, locals: M) -> Self {
         let mut res = Self {
             devices,
-            rom,
+            // rom,
             processes: vec![],
-            process_controller: Controller::new(),
+            process_controller: Controller::new(rom),
             locals,
         };
 
         // spawn main process
-        res.process_controller.spawn(ProcessType(1));
+        res.process_controller.spawn(ProcessType(1)).expect("failed to spawn main process");
         res.poll_process_controller();
         res
     }
@@ -75,7 +77,6 @@ impl<D: Devices, R: RomProvider, M: Memory> Machine<D, R, M> {
             devices: &mut self.devices,
             signaler: &mut self.process_controller,
             locals: &mut self.locals,
-            rom: &self.rom,
         };
 
         ctx.devices.clear_stdout();

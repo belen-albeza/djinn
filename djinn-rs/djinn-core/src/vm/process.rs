@@ -1,6 +1,7 @@
+use std::rc::Rc;
 use super::cpu::{Context, Cpu};
-use crate::asm::{ProcessId, ProcessType};
-use crate::vm::{Devices, Memory, ProcessSignaler, Result, RomProvider};
+use crate::asm::{Instruction, ProcessId, ProcessType};
+use crate::vm::{Devices, Memory, ProcessSignaler, Result};
 
 mod controller;
 pub use controller::Controller;
@@ -26,26 +27,27 @@ pub struct Process {
     process_type: ProcessType,
     status: Status,
     cpu: Cpu,
+    code: Rc<[Instruction]>,
 }
 
 impl Process {
-    pub fn new(id: ProcessId, process_type: ProcessType) -> Self {
+    pub fn new(id: ProcessId, process_type: ProcessType, code: Rc<[Instruction]>) -> Self {
         Self {
             cpu: Cpu::new(id),
             process_type,
             status: Status::Running,
             id,
+            code,
         }
     }
 
     /// Runs process until it yields or terminates.
-    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory, R: RomProvider>(
+    pub fn tick<'a, D: Devices, S: ProcessSignaler, M: Memory>(
         &mut self,
-        ctx: &mut Context<'a, D, S, M, R>,
+        ctx: &mut Context<'a, D, S, M>,
     ) -> Result<()> {
-        let instructions = ctx.rom.instructions(self.process_type)?;
-
-        while let Some(instruction) = self.cpu.read_opcode(instructions) {
+        let code = self.code.clone(); // FIXME: is this OK?
+        while let Some(instruction) = self.cpu.read_opcode(&code) {
             let yielded = self.cpu.exec_opcode(ctx, instruction)?;
             if yielded {
                 return Ok(());

@@ -6,7 +6,7 @@ mod token;
 
 use analyzer::Analyzer;
 use djinn_core::asm::{
-    Instruction, Location, Number, Opcode, ProcessDefinition, ProcessType, Value,
+    Instruction, Location, Number, Opcode, ProcessDefinition, ProcessType, Value, BUILTIN_LOCALS
 };
 use djinn_core::cart::Rom;
 pub use error::{AssemblerError, Result};
