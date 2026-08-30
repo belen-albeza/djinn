@@ -70,7 +70,7 @@ impl Analyzer {
         Ok(())
     }
 
-    pub fn fill_args(&self, instructions: &mut Vec<StatementNode>) -> Result<()> {
+    pub fn resolve_process_refs(&self, instructions: &mut Vec<StatementNode>) -> Result<()> {
         for instruction in instructions {
             #[allow(clippy::single_match)] // we will need this for more opcodes later
             match instruction.raw_opcode {

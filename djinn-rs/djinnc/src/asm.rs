@@ -34,10 +34,16 @@ pub fn compile(source_code: &str) -> Result<Rom> {
 
     let mut processes: Vec<ProcessNode> = vec![];
 
+    // first pass to parse processes
     while let Some(process) = parser.parse_process(&mut lexer, &mut analyzer)? {
         processes.push(process);
     }
+
+    // second pass to resolve process references and extra checks
     analyzer.check_main_process_exists(lexer.current_location())?;
+    for process in &mut processes {
+        analyzer.resolve_process_refs(&mut process.instructions)?;
+    }
 
     let rom = processes
         .into_iter()
@@ -102,6 +108,38 @@ mod tests {
                         vec![],
                     )
                 ),
+            ])))
+        );
+    }
+
+    #[test]
+    fn test_resolves_forward_spawn_references() {
+        let res = compile("~main:\nspwn ~foo\n~foo:\nnoop");
+        assert_eq!(
+            res,
+            Ok(Rom::new(HashMap::from([
+                (
+                    ProcessType(1),
+                    ProcessDefinition::new(
+                        ProcessType(1),
+                        vec![Instruction::new(
+                            Opcode::Spawn(ProcessType(2)),
+                            Location { line: 2, column: 1 }
+                        )],
+                        vec![]
+                    ),
+                ),
+                (
+                    ProcessType(2),
+                    ProcessDefinition::new(
+                        ProcessType(2),
+                        vec![Instruction::new(
+                            Opcode::NoOp,
+                            Location { line: 4, column: 1 }
+                        )],
+                        vec![]
+                    )
+                )
             ])))
         );
     }
