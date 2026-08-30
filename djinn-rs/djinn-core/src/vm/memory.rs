@@ -32,4 +32,8 @@ impl Memory for Locals {
             .and_then(|slots| slots.get(addr).copied().flatten())
             .ok_or(RuntimeError::LocalNotFound(Location::default(), id, addr))
     }
+
+    fn free(&mut self, id: ProcessId) {
+        self.locals.remove(&id);
+    }
 }
