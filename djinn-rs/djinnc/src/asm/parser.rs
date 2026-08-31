@@ -249,6 +249,7 @@ impl Parser {
             TokenKind::Stg => self.parse_store_global(lexer, analyzer, token.location),
             TokenKind::Ldg => self.parse_load_global(lexer, analyzer, token.location),
             TokenKind::Jmp => self.parse_jump(lexer, token.location),
+            TokenKind::Jnz => self.parse_jump_not_zero(lexer, token.location),
             TokenKind::Push => self.parse_push(lexer, token.location),
             TokenKind::Hash => self.parse_push(lexer, token.location), // # is a shortcut for push
             TokenKind::Not => Ok(Some(StatementNode::new(Opcode::Not, token.location))),
@@ -295,6 +296,17 @@ impl Parser {
         let label = self.consume_label(lexer)?;
         Ok(Some(
             StatementNode::new(Opcode::Jump(0), location).with_args(vec![label]),
+        ))
+    }
+
+    fn parse_jump_not_zero(
+        &mut self,
+        lexer: &mut Lexer,
+        location: Location,
+    ) -> Result<Option<StatementNode>> {
+        let label = self.consume_label(lexer)?;
+        Ok(Some(
+            StatementNode::new(Opcode::JumpNotZero(0), location).with_args(vec![label]),
         ))
     }
 
@@ -530,6 +542,25 @@ mod tests {
                     Location { line: 1, column: 1 }
                 )
                 .with_args(vec!["label".to_string()])
+            )
+        );
+    }
+
+    #[test]
+    fn test_parse_jump_not_zero_statement() {
+        let mut lexer = Lexer::new("jnz @label");
+        let mut parser = Parser::new();
+        let mut analyzer = Analyzer::new();
+        parser.current_process = "main".to_string();
+
+        let statement = parser
+            .parse_single_statement(&mut lexer, &mut analyzer)
+            .unwrap();
+        assert_eq!(
+            statement,
+            Some(
+                StatementNode::new(Opcode::JumpNotZero(0), Location { line: 1, column: 1 })
+                    .with_args(vec!["label".to_string()])
             )
         );
     }

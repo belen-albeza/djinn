@@ -34,6 +34,7 @@ pub enum TokenKind {
     Ldg,
     // Flow control
     Jmp,
+    Jnz,
     // ALU
     Not,
     And,

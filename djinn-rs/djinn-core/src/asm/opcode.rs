@@ -24,6 +24,7 @@ pub enum Opcode {
     LoadGlobal(usize),
     // Flow control
     Jump(usize),
+    JumpNotZero(usize),
     // ALU
     Not,
     And,

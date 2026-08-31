@@ -111,6 +111,13 @@ impl Cpu {
                 self.pc = addr;
                 Ok(false)
             }
+            Opcode::JumpNotZero(addr) => {
+                let value = self.pop_stack()?;
+                if value.as_bool() {
+                    self.pc = addr;
+                }
+                Ok(false)
+            }
             Opcode::Not => self.exec_opcode_not(),
             Opcode::And => self.exec_opcode_and(),
             Opcode::Or => self.exec_opcode_or(),
@@ -510,6 +517,19 @@ mod tests {
             cpu.exec_opcode(&mut env.context(), opcode(Opcode::Jump(42))),
             Ok(false)
         );
+        assert_eq!(cpu.pc, 42);
+    }
+
+    #[test]
+    fn test_jump_not_zero_opcode() {
+        let mut cpu = any_cpu();
+        let mut env = any_env();
+        cpu.stack.push(Value::Numeric(Number::Int(1)));
+        assert_eq!(
+            cpu.exec_opcode(&mut env.context(), opcode(Opcode::JumpNotZero(42))),
+            Ok(false)
+        );
+        assert!(cpu.stack.is_empty());
         assert_eq!(cpu.pc, 42);
     }
 
