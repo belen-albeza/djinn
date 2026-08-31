@@ -167,6 +167,7 @@ fn opcode_for_lexeme(lexeme: &str) -> Option<TokenKind> {
         "ldg" => Some(TokenKind::Ldg),
         // flow control
         "jmp" => Some(TokenKind::Jmp),
+        "jnz" => Some(TokenKind::Jnz),
         // values
         "true" => Some(TokenKind::Bool(true)),
         "false" => Some(TokenKind::Bool(false)),
@@ -263,6 +264,7 @@ yld ;actual opcode
             ("stg", TokenKind::Stg),
             ("ldg", TokenKind::Ldg),
             ("jmp", TokenKind::Jmp),
+            ("jnz", TokenKind::Jnz),
             ("not", TokenKind::Not),
             ("and", TokenKind::And),
             ("or", TokenKind::Or),
