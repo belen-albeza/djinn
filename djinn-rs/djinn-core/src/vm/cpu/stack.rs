@@ -16,6 +16,20 @@ impl Stack {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
+
+    #[cfg(test)]
+    pub fn into_values(self) -> Vec<Value> {
+        self.items
+    }
+}
+
+#[cfg(test)]
+impl FromIterator<Value> for Stack {
+    fn from_iter<I: IntoIterator<Item = Value>>(values: I) -> Self {
+        Self {
+            items: values.into_iter().collect(),
+        }
+    }
 }
 
 impl ValueStack for Stack {

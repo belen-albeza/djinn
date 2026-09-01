@@ -1,4 +1,4 @@
-use crate::asm::Location;
+use crate::asm::{Location, Number, Value};
 use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use crate::vm::ValueStack;
@@ -7,6 +7,7 @@ use crate::vm::ValueStack;
 pub enum VideoApi {
     Clear = 0x00,
     PutPixel = 0x01,
+    GetPixel = 0x02,
 }
 
 impl TryFrom<u8> for VideoApi {
@@ -16,6 +17,7 @@ impl TryFrom<u8> for VideoApi {
         match value {
             0x00 => Ok(Self::Clear),
             0x01 => Ok(Self::PutPixel),
+            0x02 => Ok(Self::GetPixel),
             _ => Err(RuntimeError::InvalidApiCode(
                 Location::default(),
                 value,
@@ -60,6 +62,7 @@ impl VideoDevice {
         match VideoApi::try_from(raw_op)? {
             VideoApi::Clear => self.exec_clear_buffer(stack, location),
             VideoApi::PutPixel => self.exec_put_pixel(stack, location),
+            VideoApi::GetPixel => self.exec_get_pixel(stack, location),
         }
     }
 
@@ -103,6 +106,20 @@ impl VideoDevice {
         self.put_pixel(x, y, z, color);
         Ok(false)
     }
+
+    fn exec_get_pixel(&mut self, stack: &mut impl ValueStack, location: Location) -> Result<bool> {
+        let y = stack.pop(location)?.as_int();
+        let x = stack.pop(location)?.as_int();
+
+        let Some(index) = Self::index(x, y) else {
+            return Ok(false);
+        };
+
+        let color = self.video_buffer[index] as i32;
+
+        stack.push(Value::Numeric(Number::Int(color)));
+        Ok(false)
+    }
 }
 
 impl Default for VideoDevice {
@@ -114,6 +131,7 @@ impl Default for VideoDevice {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::vm::Stack;
 
     #[test]
     fn test_clear_buffer() {
@@ -138,5 +156,21 @@ mod tests {
 
         video_device.put_pixel(0, 0, 2, 0x0a);
         assert_eq!(video_device.buffer()[0], 0x0a);
+    }
+
+    #[test]
+    fn test_exec_get_pixel() {
+        let mut video_device = VideoDevice::new();
+        video_device.video_buffer[32 + VIDEO_WIDTH * 32] = 0x0f;
+
+        let mut stack = Stack::from_iter([
+            Value::Numeric(Number::Int(32)),
+            Value::Numeric(Number::Int(32)),
+        ]);
+
+        let result = video_device.exec_get_pixel(&mut stack, Location::default());
+        assert!(result.is_ok());
+
+        assert_eq!(stack.into_values(), vec![Value::Numeric(Number::Int(0x0f))]);
     }
 }
