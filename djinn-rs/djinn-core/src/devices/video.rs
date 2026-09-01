@@ -3,10 +3,10 @@ use crate::devices::DeviceType;
 use crate::error::{Result, RuntimeError};
 use crate::vm::ValueStack;
 
-#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VideoApi {
     Clear = 0x00,
+    PutPixel = 0x01,
 }
 
 impl TryFrom<u8> for VideoApi {
@@ -15,6 +15,7 @@ impl TryFrom<u8> for VideoApi {
     fn try_from(value: u8) -> Result<Self> {
         match value {
             0x00 => Ok(Self::Clear),
+            0x01 => Ok(Self::PutPixel),
             _ => Err(RuntimeError::InvalidApiCode(
                 Location::default(),
                 value,
@@ -54,12 +55,45 @@ impl VideoDevice {
         location: Location,
     ) -> Result<bool> {
         match VideoApi::try_from(raw_op)? {
-            VideoApi::Clear => {
-                let color = stack.pop(location)?.as_int().rem_euclid(16);
-                self.clear_buffer(color as u8);
-                Ok(false)
-            }
+            VideoApi::Clear => self.exec_clear_buffer(stack, location),
+            VideoApi::PutPixel => self.exec_put_pixel(stack, location),
         }
+    }
+
+    fn put_pixel(&mut self, x: i32, y: i32, _z: i32, color: u8) {
+        if let Some(index) = Self::index(x, y) {
+            self.video_buffer[index] = color;
+        }
+    }
+
+    #[inline]
+    fn index(x: i32, y: i32) -> Option<usize> {
+        // out of bounds check
+        if x < 0 || x as usize >= VIDEO_WIDTH || y < 0 || y as usize >= VIDEO_HEIGHT {
+            None
+        } else {
+            Some(y as usize * VIDEO_WIDTH + x as usize)
+        }
+    }
+
+    fn exec_clear_buffer(
+        &mut self,
+        stack: &mut impl ValueStack,
+        location: Location,
+    ) -> Result<bool> {
+        let color = stack.pop(location)?.as_int().rem_euclid(16);
+        self.clear_buffer(color as u8);
+        Ok(false)
+    }
+
+    fn exec_put_pixel(&mut self, stack: &mut impl ValueStack, location: Location) -> Result<bool> {
+        let color = stack.pop(location)?.as_int().rem_euclid(15) as u8;
+        let z = stack.pop(location)?.as_int();
+        let y = stack.pop(location)?.as_int();
+        let x = stack.pop(location)?.as_int();
+
+        self.put_pixel(x, y, z, color);
+        Ok(false)
     }
 }
 
