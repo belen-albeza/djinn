@@ -13,6 +13,7 @@ static ALIASES: LazyLock<HashMap<&'static str, u8>> = LazyLock::new(|| {
         // video api
         ("clear", 0x00),
         ("put-pixel", 0x01),
+        ("get-pixel", 0x02),
     ])
 });
 

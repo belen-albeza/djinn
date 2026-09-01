@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
 mod cpu;
+#[cfg(test)]
+pub(crate) use cpu::stack::Stack;
+
 pub mod memory;
 mod process;
 
