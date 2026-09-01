@@ -31,12 +31,14 @@ pub const VIDEO_HEIGHT: usize = 144;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VideoDevice {
     video_buffer: [u8; VIDEO_WIDTH * VIDEO_HEIGHT],
+    z_buffer: [i32; VIDEO_WIDTH * VIDEO_HEIGHT],
 }
 
 impl VideoDevice {
     pub fn new() -> Self {
         Self {
             video_buffer: [0; VIDEO_WIDTH * VIDEO_HEIGHT],
+            z_buffer: [i32::MIN; VIDEO_WIDTH * VIDEO_HEIGHT],
         }
     }
 
@@ -46,6 +48,7 @@ impl VideoDevice {
 
     pub fn clear_buffer(&mut self, color: u8) {
         self.video_buffer.fill(color.rem_euclid(16));
+        self.z_buffer.fill(i32::MIN);
     }
 
     pub fn call_api(
@@ -60,9 +63,14 @@ impl VideoDevice {
         }
     }
 
-    fn put_pixel(&mut self, x: i32, y: i32, _z: i32, color: u8) {
-        if let Some(index) = Self::index(x, y) {
+    fn put_pixel(&mut self, x: i32, y: i32, z: i32, color: u8) {
+        let Some(index) = Self::index(x, y) else {
+            return;
+        };
+
+        if z >= self.z_buffer[index] {
             self.video_buffer[index] = color;
+            self.z_buffer[index] = z;
         }
     }
 
@@ -112,5 +120,23 @@ mod tests {
         let mut video_device = VideoDevice::new();
         video_device.clear_buffer(0x0f);
         assert_eq!(video_device.buffer(), &[0x0f; VIDEO_WIDTH * VIDEO_HEIGHT]);
+    }
+
+    #[test]
+    fn test_put_pixel() {
+        let mut video_device = VideoDevice::new();
+        video_device.put_pixel(0, 0, 0, 0x0f);
+        assert_eq!(video_device.buffer()[0], 0x0f);
+    }
+
+    #[test]
+    fn test_put_pixel_over_existing_pixel() {
+        let mut video_device = VideoDevice::new();
+        video_device.put_pixel(0, 0, 1, 0x0f);
+        video_device.put_pixel(0, 0, 0, 0x0e);
+        assert_eq!(video_device.buffer()[0], 0x0f);
+
+        video_device.put_pixel(0, 0, 2, 0x0a);
+        assert_eq!(video_device.buffer()[0], 0x0a);
     }
 }
