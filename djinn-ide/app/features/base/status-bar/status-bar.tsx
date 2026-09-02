@@ -33,7 +33,7 @@ export default function StatusBar() {
   const messages = useStatusBarStore((state) => state.messages);
 
   const pathname = useLocation().pathname;
-  const shallShowCursor = pathname === "/" || pathname === "/code"; // TODO:
+  const shallShowCursor = pathname === "/" || pathname === "/code";
   const cursor = useEditorStore((state) => state.cursor);
 
   useEffect(() => {

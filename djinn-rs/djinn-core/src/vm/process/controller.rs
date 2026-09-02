@@ -34,11 +34,11 @@ impl<R: RomProvider> Controller<R> {
         Ok(id)
     }
 
-    // Cancel same-frame kills, then move survivors into `processes`,
+    // Cancel newly-spawned, same-frame kills. Move survivors into `processes`
     pub fn drain_spawned_into(&mut self, processes: &mut Vec<Process>) {
         let killed = &self.killed;
-        self.spawned.retain(|p| !killed.contains(&p.id())); // drop cancelled spawns, in place
-        processes.append(&mut self.spawned); // moves elements, keeps capacity
+        self.spawned.retain(|p| !killed.contains(&p.id()));
+        processes.append(&mut self.spawned);
     }
 
     pub fn killed_mut(&mut self) -> &mut Vec<ProcessId> {
